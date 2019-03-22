@@ -10,6 +10,8 @@ export class AppService {
   redoStates = []
   current = -1
 
+  selections = []
+
   insertObject: Subject<any> = new Subject<any>()
   defaultChair: Subject<any> = new Subject<any>()
   performOperation: Subject<any> = new Subject<any>()

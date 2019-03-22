@@ -90,18 +90,24 @@
         <div *ngIf="init">
           <button mat-icon-button matTooltip="Undo (Ctrl + Z)" (click)="app.undo()" [disabled]="app.states.length === 1"><fa-icon [icon]="['fas', 'reply']"></fa-icon></button>
           <button mat-icon-button matTooltip="Redo (Ctrl + Shift + Z)" (click)="app.redo()" [disabled]="app.redoStates.length === 0"><fa-icon [icon]="['fas', 'share']"></fa-icon></button>
-          <button mat-icon-button matTooltip="Clone"><fa-icon [icon]="['fas', 'clone']"></fa-icon></button>
-          <button mat-icon-button matTooltip="Delete (Delete)"><fa-icon [icon]="['fas', 'trash']"></fa-icon></button>
-          <button mat-icon-button matTooltip="Rotate Anti-Clockwise (Ctrl + Left Arrow)"><fa-icon [icon]="['fas', 'undo']"></fa-icon></button>
-          <button mat-icon-button matTooltip="Rotate Clockwise (Ctrl + Right Arrow)"><fa-icon [icon]="['fas', 'redo']"></fa-icon></button>
-          <button mat-icon-button matTooltip="Group (Ctrl + G)"><fa-icon [icon]="['fas', 'object-group']"></fa-icon></button>
-          <button mat-icon-button matTooltip="Ungroup (Ctrl + E)"><fa-icon [icon]="['fas', 'object-ungroup']"></fa-icon></button>
+          <button mat-icon-button matTooltip="Clone" [disabled]="app.selections.length === 0"><fa-icon [icon]="['fas', 'clone']"></fa-icon></button>
+          <button mat-icon-button matTooltip="Delete (Delete)" [disabled]="app.selections.length === 0"><fa-icon [icon]="['fas', 'trash']"></fa-icon></button>
+          <button mat-icon-button matTooltip="Rotate Anti-Clockwise (Ctrl + Left Arrow)" [disabled]="app.selections.length === 0"><fa-icon [icon]="['fas', 'undo']"></fa-icon></button>
+          <button mat-icon-button matTooltip="Rotate Clockwise (Ctrl + Right Arrow)" [disabled]="app.selections.length === 0"><fa-icon [icon]="['fas', 'redo']"></fa-icon></button>
+          <button mat-icon-button matTooltip="Group (Ctrl + G)" [disabled]="app.selections.length < 2"><fa-icon [icon]="['fas', 'object-group']"></fa-icon></button>
+          <button mat-icon-button matTooltip="Ungroup (Ctrl + E)" [disabled]="app.selections.length != 1"><fa-icon [icon]="['fas', 'object-ungroup']"></fa-icon></button>
           <button mat-button matTooltip="Arrange" [matMenuTriggerFor]="arrange">Arrange</button>
         </div>
         <mat-menu #arrange="matMenu">
           <ng-template matMenuContent>
-            <button mat-menu-item>Settings</button>
-            <button mat-menu-item>Help</button>
+            <button mat-menu-item>Arrange Left</button>
+            <button mat-menu-item>Arrange Center</button>
+            <button mat-menu-item>Arrange Right</button>
+            <button mat-menu-item>Arrange Top</button>
+            <button mat-menu-item>Arrange Middle</button>
+            <button mat-menu-item>Arrange Bottom</button>
+            <button mat-menu-item>Center Horizontally</button>
+            <button mat-menu-item>Center Vertically</button>
           </ng-template>
         </mat-menu>
       </mat-toolbar-row>

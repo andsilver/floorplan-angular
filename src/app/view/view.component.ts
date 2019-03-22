@@ -57,6 +57,7 @@ export class ViewComponent implements OnInit, AfterViewInit {
         this.view.loadFromDatalessJSON(this.app.states[this.app.states.length - 1], () => {
           this.view.renderAll()
           this.roomLayer = this.view._objects.find(obj => obj.name.indexOf('ROOM') > -1)
+          RL_ROOM_SIZE = { width: this.roomLayer.width, height: this.roomLayer.height }
         })
       } else if (operation === 'REDO') {
         const state = this.app.redoStates[this.app.redoStates.length - 1]
@@ -66,6 +67,7 @@ export class ViewComponent implements OnInit, AfterViewInit {
         this.view.loadFromDatalessJSON(state, () => {
           this.view.renderAll()
           this.roomLayer = this.view._objects.find(obj => obj.name.indexOf('ROOM') > -1)
+          RL_ROOM_SIZE = { width: this.roomLayer.width, height: this.roomLayer.height }
         })
       }
     })
@@ -93,7 +95,21 @@ export class ViewComponent implements OnInit, AfterViewInit {
     this.view = canvas
 
     this.view.on('object:selected', (e: fabric.IEvent) => {
-      console.log(e)
+      console.log('Object Selected:', e)
+
+    })
+
+    this.view.on('selection:created', (e: fabric.IEvent) => {
+      console.log('Selection Created:', e)
+      this.app.selections = this.view.getActiveObjects()
+    });
+
+    this.view.on('selection:cleared', (e: fabric.IEvent) => {
+      this.app.selections = []
+    })
+
+    this.view.on('selection:updated', (e: fabric.IEvent) => {
+      console.log('Selection Updated:', e)
     })
   }
 
