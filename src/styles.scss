@@ -1,1 +1,42 @@
 /* You can add global styles to this file, and also import other style files */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  color: #292b2c;
+}
+
+.rl-object-options {
+  .mat-expansion-panel-body {
+    padding: 0 !important;
+  }
+
+  .mat-list-item:hover {
+    background: #ececec;
+    cursor: pointer;
+  }
+
+  mat-form-field {
+    padding-left: 12px;
+    padding-top: 20px;
+    width: 90%;
+  }
+}
+
+.canvas-container {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+mat-button-toggle {
+  &:focus, &:active {
+    outline: none;
+    border: none;
+  }
+}
