@@ -19,19 +19,10 @@ export class AppComponent implements OnInit {
   furnishings = FURNISHINGS
   defaultChairIndex = 0
 
-  constructor (public app: AppService) {}
+  previewItem = null
+  previewType = null
 
-  @HostListener('window:keydown', ['$event'])
-  keyEvent(event: KeyboardEvent) {
-    // Ctrl + Shift + Z
-    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.keyCode === 90) {
-      this.app.redo() 
-    }
-    // Ctrl + Z
-    else if ((event.ctrlKey || event.metaKey) && event.keyCode === 90) {
-      this.app.undo()
-    }
-  }
+  constructor (public app: AppService) {}
 
   ngOnInit() {
     // this.furnishings = FURNISHINGS
@@ -43,6 +34,7 @@ export class AppComponent implements OnInit {
   }
 
   insert(object: any, type: string) {
+    if (this.app.roomEdit) return
     this.app.insertObject.next({type, object})
   }
 

@@ -6,37 +6,105 @@ import { Subject, BehaviorSubject } from 'rxjs';
 })
 export class AppService {
 
+  roomEdit = false
+
   states = []
   redoStates = []
-  current = -1
 
-  selections = []
+  roomEditOperate = 'CORNER'
+  roomEditStates = []
+  roomEditRedoStates = []
+
+  selections: any[] = []
+  copied: any;
+
+  ungroupable: boolean = false
 
   insertObject: Subject<any> = new Subject<any>()
   defaultChair: Subject<any> = new Subject<any>()
   performOperation: Subject<any> = new Subject<any>()
+  roomEdition: Subject<boolean> = new Subject<boolean>()
   saveState = new Subject<any>()
 
   constructor() {
     this.saveState.subscribe(res => {
+      if (this.roomEdit) {
+        this.roomEditStates.push(res)
+        this.roomEditRedoStates = []
+        return
+      }
       this.states.push(res)
       this.redoStates = []
-      this.current = this.states.length - 1
-      console.log(this.states)
     })
   }
 
+  editRoom() {
+    this.roomEdit = true
+    this.roomEdition.next(true)
+  }
+
+  endEditRoom() {
+    this.roomEdit = false
+    this.roomEdition.next(false)
+  }
+
   undo() {
-    if (this.states.length === 1) {
+    if ((this.states.length === 1 && !this.roomEdit) || (this.roomEditStates.length === 1 && this.roomEdit)) {
       return
     }
     this.performOperation.next('UNDO')
   }
 
   redo() {
-    if (this.redoStates.length === 0) {
+    if ((this.redoStates.length === 0 && !this.roomEdit) || (this.roomEditRedoStates.length === 0 && this.roomEdit)) {
       return
     }
     this.performOperation.next('REDO')
+  }
+
+  clone() {
+    this.copy(true)
+  }
+
+  copy(doClone = false) {
+    this.performOperation.next('COPY')
+    if (doClone) {
+      setTimeout(() => this.paste(), 100)
+    }
+  }
+
+  paste() {
+    this.performOperation.next('PASTE')
+  }
+
+  delete() {
+    if (!this.selections.length)
+      return
+    this.performOperation.next('DELETE')
+  }
+
+  rotateAntiClockWise() {
+    this.performOperation.next('ROTATE_ANTI')
+  }
+
+  rotateClockWise() {
+    this.performOperation.next('ROTATE')
+  }
+
+  group() {
+    this.performOperation.next('GROUP')
+  }
+
+  ungroup() {
+    this.performOperation.next('UNGROUP')
+  }
+
+  placeInCenter(direction) {
+    this.performOperation.next(direction)
+  }
+
+  changeRoomEditOperate(op) {
+    this.roomEditOperate = op
+    this.performOperation.next('ROOM_OPERATION')
   }
 }

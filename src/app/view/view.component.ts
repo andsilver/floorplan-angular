@@ -2,7 +2,7 @@ import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { fabric } from 'fabric';
 import { AppService } from '../app.service';
 
-const { Canvas, Group, Rect, Line, Circle, Ellipse, Path, Polygon, Polyline, Triangle } = fabric
+const { Canvas, Group, Rect, Line, Circle, Ellipse, Path, Polygon, Polyline, Triangle, Point } = fabric
 
 const
   RL_VIEW_WIDTH = 120,
@@ -16,60 +16,120 @@ const
   RL_AISLEGAP = 12 * 3,
   RL_ROOM_OUTER_SPACING = 12,
   RL_ROOM_INNER_SPACING = 4,
-  RL_ROOM_STROKE = '#222',
-  RL_ROOM_FILL = '#FFF',
-  RL_DISABLED = { hasControls: false, selectable: false, hasBorders: false, evented: false }
+  RL_ROOM_STROKE = '#666',
+  RL_DISABLED = { hasControls: false, selectable: false },
+  RL_CORNER_FILL = '#88f'
 
 let
   RL_ROOM_SIZE = { width: 960, height: 480 },
-  RL_DEFAULT_CHAIR = null
+  RL_DEFAULT_CHAIR = null,
+  RL_CTRL_KEY_DOWN = false,
+  RL_MOVE_WALL_ID = -1
 
 
 
 @Component({
   selector: 'app-view',
   templateUrl: './view.component.html',
-  styleUrls: ['./view.component.scss']
+  styleUrls: ['./view.component.scss'],
+  host: {
+    '(document:keydown)': 'onKeyDown($event)',
+    '(document:keyup)': 'onKeyUp($event)'
+  }
 })
 export class ViewComponent implements OnInit, AfterViewInit {
 
   view: fabric.Canvas;
-  room: fabric.Path | fabric.Rect;
+  room: fabric.Group
   roomLayer: fabric.Group | fabric.Rect;
+
+  corners = []
+  walls: fabric.Line[] = []
 
   lastObjectDefinition = null;
   lastObject = null;
 
   constructor(public app: AppService) { }
 
+  onKeyDown(event: KeyboardEvent) {
+    // Ctrl Key is down
+    if (event.ctrlKey) {
+      RL_CTRL_KEY_DOWN = true
+      // Ctrl + Shift + Z
+      if (event.shiftKey && event.keyCode === 90) this.app.redo()
+      // Ctrl + Z
+      else if (event.keyCode === 90) this.app.undo()
+      // Ctrl + C
+      else if (event.keyCode === 67) this.app.copy()
+      // Ctrl + V
+      else if (event.keyCode === 86) this.paste()
+      // Ctrl + Left arrow
+      else if (event.keyCode === 37) this.rotate()
+      // Ctrl + Right arrow
+      else if (event.keyCode === 39) this.rotate(false)
+      // Ctrl + G
+      else if (event.keyCode === 71) this.group()
+    }
+    // Delete
+    else if (event.keyCode === 46) this.delete()
+    // Left Arrow
+    else if (event.keyCode === 37) this.move('LEFT')
+    // Up Arrow
+    else if (event.keyCode === 38) this.move('UP')
+    // Right Arrow
+    else if (event.keyCode === 39) this.move('RIGHT')
+    // Down Arrow
+    else if (event.keyCode === 40) this.move('DOWN')
+  }
+
+  onKeyUp(event: KeyboardEvent) {
+    if (event.key === 'Control') {
+      RL_CTRL_KEY_DOWN = false
+    }
+  }
+
   ngOnInit() {
+
+    this.app.roomEdition.subscribe(state => {
+      this.corners.forEach(c => this.setCornerStyle(c))
+      this.drawRoom()
+      if (state) {
+        this.editRoom()
+      } else {
+        this.cancelRoomEdition()
+      }
+    })
+
     this.app.insertObject.subscribe(res => {
       this.handleObjectInsertion(res)
       this.saveState()
     })
+
     this.app.defaultChair.subscribe(res => RL_DEFAULT_CHAIR = res)
+
     this.app.performOperation.subscribe(operation => {
-      if (operation === 'UNDO') {
-        const state = this.app.states[this.app.states.length - 1]
-        this.app.redoStates.push(state)
-        this.app.states.pop()
-        this.view.clear()
-        this.view.loadFromDatalessJSON(this.app.states[this.app.states.length - 1], () => {
-          this.view.renderAll()
-          this.roomLayer = this.view._objects.find(obj => obj.name.indexOf('ROOM') > -1)
-          RL_ROOM_SIZE = { width: this.roomLayer.width, height: this.roomLayer.height }
-        })
-      } else if (operation === 'REDO') {
-        const state = this.app.redoStates[this.app.redoStates.length - 1]
-        this.app.redoStates.pop()
-        this.app.states.push(state)
-        this.view.clear()
-        this.view.loadFromDatalessJSON(state, () => {
-          this.view.renderAll()
-          this.roomLayer = this.view._objects.find(obj => obj.name.indexOf('ROOM') > -1)
-          RL_ROOM_SIZE = { width: this.roomLayer.width, height: this.roomLayer.height }
-        })
-      }
+      if (operation === 'UNDO')
+        this.undo()
+      else if (operation === 'REDO')
+        this.redo()
+      else if (operation === 'COPY')
+        this.copy()
+      else if (operation === 'PASTE')
+        this.paste()
+      else if (operation === 'DELETE')
+        this.delete()
+      else if (operation === 'ROTATE')
+        this.rotate()
+      else if (operation === 'ROTATE_ANTI')
+        this.rotate(false)
+      else if (operation === 'GROUP')
+        this.group()
+      else if (operation === 'UNGROUP')
+        this.ungroup()
+      else if (operation === 'HORIZONTAL' || operation === 'VERTICAL')
+        this.placeInCenter(operation)
+      else if (operation === 'ROOM_OPERATION')
+        this.drawRoom()
     })
   }
 
@@ -92,24 +152,136 @@ export class ViewComponent implements OnInit, AfterViewInit {
     const canvas = new Canvas('main')
     canvas.setWidth(RL_VIEW_WIDTH * RL_FOOT)
     canvas.setHeight(RL_VIEW_HEIGHT * RL_FOOT)
+    // canvas.
     this.view = canvas
 
-    this.view.on('object:selected', (e: fabric.IEvent) => {
-      console.log('Object Selected:', e)
+    const determineUngroup = () => {
+      if (this.app.selections.length > 1) {
+        this.app.ungroupable = false
+        return
+      }
 
-    })
+      const obj = this.view.getActiveObject()
+      const type = obj.name ? obj.name.split(':')[0] : ''
+      if (type === 'CHAIR' || type === 'MISCELLANEOUS') {
+        this.app.ungroupable = false
+      } else {
+        this.app.ungroupable = true
+      }
+    }
+
+    const cornersOfWall = (obj: fabric.Line) => {
+      const id = Number(obj.name.split(':')[1])
+      const v1Id = id
+      const v1 = this.corners[v1Id]
+      const v2Id = (id + 1) % this.walls.length
+      const v2 = this.corners[v2Id]
+      return { v1, v1Id, v2, v2Id }
+    }
 
     this.view.on('selection:created', (e: fabric.IEvent) => {
-      console.log('Selection Created:', e)
+      if (this.app.roomEdit)
+        return
+      const active = this.view.getActiveObject()
+      active.lockScalingX = true, active.lockScalingY = true
       this.app.selections = this.view.getActiveObjects()
-    });
+      determineUngroup()
+    })
 
     this.view.on('selection:cleared', (e: fabric.IEvent) => {
+      if (this.app.roomEdit)
+        return
       this.app.selections = []
+      this.app.ungroupable = false
     })
 
     this.view.on('selection:updated', (e: fabric.IEvent) => {
-      console.log('Selection Updated:', e)
+      if (this.app.roomEdit)
+        return
+      const active = this.view.getActiveObject()
+      active.lockScalingX = true, active.lockScalingY = true
+      this.app.selections = this.view.getActiveObjects()
+      determineUngroup()
+    })
+
+    this.view.on('object:moved', () => {
+      if (RL_MOVE_WALL_ID !== -1) {
+        RL_MOVE_WALL_ID = -1
+        // for (let i = 0; i < this.walls.length; i++) {
+        //   let f = false
+        //   for (let j = i + 1; j < this.walls.length; j++) {
+        //     if (this.walls[i].intersectsWithObject(this.walls[j])) {
+        //       this.undo()
+        //       return
+        //     }
+        //   }
+        // }
+      }
+      this.saveState()
+    })
+    this.view.on('object:rotated', () => this.saveState())
+
+    this.view.on('mouse:down:before', (e: fabric.IEvent) => {
+      const obj = e.target
+
+      if (this.app.roomEdit && this.app.roomEditOperate === 'WALL' && obj && obj.name.indexOf('WALL') > -1 && obj instanceof Line) {
+        let { v1, v2, v1Id, v2Id } = cornersOfWall(obj)
+        const v0Id = (v1Id === 0) ? this.corners.length - 1 : v1Id - 1
+        const v3Id = (v2Id === this.corners.length - 1) ? 0 : v2Id + 1
+        const v0 = this.corners[v0Id]
+        const v3 = this.corners[v3Id]
+
+        RL_MOVE_WALL_ID = v1Id
+
+        if ((v0.top === v1.top && v1.top === v2.top) || (v0.left === v1.left && v1.left === v2.left)) {
+          this.corners.splice(v1Id, 0, this.drawCorner(new Point(v1.left, v1.top)))
+          RL_MOVE_WALL_ID = v1Id + 1
+          v2Id += 1
+        }
+        if ((v1.top === v2.top && v2.top === v3.top) || (v1.left === v2.left && v2.left === v3.left)) {
+          this.corners.splice(v2Id + 1, 0, this.drawCorner(new Point(v2.left, v2.top)))
+        }
+        this.drawRoom()
+        this.saveState()
+      }
+    })
+
+    this.view.on('object:moving', (e: fabric.IEvent) => {
+      if (RL_MOVE_WALL_ID !== -1) {
+        const p = e['pointer']
+        const v1 = this.corners[RL_MOVE_WALL_ID]
+        const v2 = this.corners[(RL_MOVE_WALL_ID + 1) % this.corners.length]
+        const direction = v1.left === v2.left ? 'HORIZONTAL' : 'VERTICAL'
+
+        if (p.y < RL_ROOM_OUTER_SPACING) p.y = RL_ROOM_OUTER_SPACING
+        if (p.x < RL_ROOM_OUTER_SPACING) p.x = RL_ROOM_OUTER_SPACING
+
+        if (direction === 'VERTICAL') {
+          v1.top = v2.top = p.y
+        } else {
+          v1.left = v2.left = p.x
+        }
+        this.drawRoom()
+      }
+    })
+
+    this.view.on('mouse:up', (e: fabric.IEvent) => {
+      const obj = e.target
+      if (this.app.roomEdit && this.app.roomEditOperate === 'CORNER' && obj && obj.name.indexOf('WALL') > -1 && obj instanceof Line) {
+        const p = e['pointer']
+        const { v1, v1Id, v2, v2Id } = cornersOfWall(obj)
+        const ind = v1Id < v2Id ? v1Id : v2Id
+        if (v1.left === v2.left)
+          p.x = v1.left
+        else if (v1.top === v2.top)
+          p.y = v1.top
+        const newCorner = this.drawCorner(new Point(p.x, p.y))
+        if (Math.abs(v1Id - v2Id) != 1) this.corners.push(newCorner)
+        else this.corners.splice(ind + 1, 0, newCorner)
+
+        this.drawRoom()
+        this.saveState()
+      }
     })
   }
 
@@ -119,28 +291,105 @@ export class ViewComponent implements OnInit, AfterViewInit {
    */
   setRoom({ title = 'default', width, height }) {
 
-    if (this.room) {
-      this.view.remove(this.roomLayer)
+    if (this.walls.length) {
+      this.view.remove(...this.walls)
+      this.view.renderAll()
     }
 
-    this.room = new Rect({
-      width: width,
-      height: height,
-      stroke: RL_ROOM_STROKE,
-      strokeWidth: RL_ROOM_INNER_SPACING,
-      fill: RL_ROOM_FILL,
-    })
+    const LT = new Point(RL_ROOM_OUTER_SPACING, RL_ROOM_OUTER_SPACING)
+    const RT = new Point(LT.x + width, LT.y)
+    const LB = new Point(LT.x, LT.y + height)
+    const RB = new Point(RT.x, LB.y)
 
-    this.room.top = RL_ROOM_OUTER_SPACING
-    this.room.left = RL_ROOM_OUTER_SPACING
-    this.roomLayer = new fabric.Group([this.room], { name: `ROOM:${title}`, ...RL_DISABLED })
-    this.view.add(this.roomLayer)
+    this.corners = [LT, RT, RB, LB].map(p => this.drawCorner(p))
 
-    this.roomLayer.sendToBack()
-    RL_ROOM_SIZE = { width, height }
+    this.drawRoom()
   }
 
+  setCornerStyle(c: fabric.Circle) {
+    c.moveCursor = this.view.freeDrawingCursor
+    c.hoverCursor = this.view.freeDrawingCursor
+    c.selectable = false
+    c.evented = false
+    c.set('radius', RL_ROOM_INNER_SPACING / (this.app.roomEdit ? 1 : 2))
+    c.set('fill', this.app.roomEdit ? RL_CORNER_FILL : RL_ROOM_STROKE)
+  }
 
+  drawCorner(p: fabric.Point) {
+    const c = new Circle({
+      left: p.x,
+      top: p.y,
+      strokeWidth: 0,
+      hasControls: false,
+      originX: 'center',
+      originY: 'center',
+      name: 'CORNER'
+    })
+    this.setCornerStyle(c)
+    return c
+  }
+
+  drawRoom() {
+
+    const exists = this.view.getObjects().filter(obj => obj.name.indexOf('WALL') > -1 || obj.name === 'CORNER')
+    this.view.remove(...exists)
+
+    this.view.add(...this.corners)
+
+    const wall = (coords: number[], index: number) => new Line(coords, {
+      stroke: RL_ROOM_STROKE,
+      strokeWidth: RL_ROOM_INNER_SPACING,
+      name: `WALL:${index}`,
+      originX: 'center',
+      originY: 'center',
+      hoverCursor: this.app.roomEdit ? (this.app.roomEditOperate === 'CORNER' ? 'pointer' : this.view.moveCursor) : this.view.defaultCursor,
+      hasControls: false,
+      hasBorders: false,
+      selectable: this.app.roomEdit,
+      evented: this.app.roomEdit,
+      lockMovementX: this.app.roomEditOperate !== 'WALL',
+      lockMovementY: this.app.roomEditOperate !== 'WALL'
+    })
+
+    let LT = new Point(9999, 9999), RB = new Point(0, 0)
+
+    this.walls = this.corners.map((corner, i) => {
+      const start = corner
+      const end = (i === this.corners.length - 1) ? this.corners[0] : this.corners[i + 1]
+
+      if (corner.top < LT.x && corner.left < LT.y) LT = new Point(corner.left, corner.top)
+      if (corner.top > RB.y && corner.left > RB.y) RB = new Point(corner.left, corner.top)
+
+      const w = wall([start.left, start.top, end.left, end.top], i)
+      return w
+    })
+
+    this.view.add(...this.walls)
+    this.walls.forEach(w => w.sendToBack())
+    RL_ROOM_SIZE = { width: RB.x - LT.x, height: RB.y - LT.y }
+  }
+
+  editRoom() {
+    this.view.getObjects().forEach(r => {
+      if (r.name.indexOf('WALL') === -1 && r.name !== 'CORNER') {
+        r.selectable = false
+        r.evented = false
+        r.opacity = 0.3
+      }
+    })
+    if (this.app.roomEditStates.length === 0)
+      this.saveState()
+  }
+
+  cancelRoomEdition() {
+    this.view.getObjects().forEach(r => {
+      if (r.name.indexOf('WALL') === -1 && r.name !== 'CORNER') {
+        r.selectable = true
+        r.evented = true
+        r.opacity = 1
+      }
+    })
+  }
 
   handleObjectInsertion({ type, object }) {
 
@@ -154,7 +403,7 @@ export class ViewComponent implements OnInit, AfterViewInit {
     if (type === 'CHAIR') {
       group = this.createShape(object)
     } else if (type === 'MISCELLANEOUS') {
-      group = this.createShape(object, RL_STROKE, RL_FILL)
+      group = this.createShape(object, RL_STROKE, RL_FILL, type)
     } else if (type === 'TABLE') {
       group = this.createTable(object)
     }
@@ -269,11 +518,26 @@ export class ViewComponent implements OnInit, AfterViewInit {
         angle += angleIncrement;
       }
 
-      const tableCircle = { left: origin_x, top: origin_y, radius: tableRadius, fill: RL_FILL, stroke: RL_STROKE, originX: 'center', originY: 'center' };
+      const tableCircle = {
+        left: origin_x,
+        top: origin_y,
+        radius: tableRadius,
+        fill: RL_FILL,
+        stroke: RL_STROKE,
+        originX: 'center',
+        originY: 'center',
+        name: 'DESK'
+      };
       components[index] = new fabric.Circle(tableCircle);
 
     } else if (def.shape == 'rect') {
-      const tableRect = { width: def.width, height: def.height, fill: RL_FILL, stroke: RL_STROKE };
+      const tableRect = {
+        width: def.width,
+        height: def.height,
+        fill: RL_FILL,
+        stroke: RL_STROKE,
+        name: 'DESK'
+      };
 
       // calculate gap between chairs, with extra for gap to end of table
       let gap = 0, firstOffset = 0, leftOffset = 0, topOffset = 0;
@@ -406,10 +670,199 @@ export class ViewComponent implements OnInit, AfterViewInit {
     return (fObj)
   }
 
-  // Save current state
+  /** Save current state */
   saveState() {
-    const state = this.view.toDatalessJSON(['name', 'hasControls', 'selectable', 'hasBorders', 'evented'])
+    const state = this.view.toDatalessJSON(['name', 'hasControls', 'selectable', 'hasBorders', 'evented', 'hoverCursor', 'moveCursor'])
     this.app.saveState.next(JSON.stringify(state))
+  }
+
+
+  undo() {
+    let current = null
+
+    if (this.app.roomEdit) {
+      const state = this.app.roomEditStates.pop()
+      this.app.roomEditRedoStates.push(state)
+      current = this.app.roomEditStates[this.app.roomEditStates.length - 1]
+    } else {
+      const state = this.app.states.pop()
+      this.app.redoStates.push(state)
+      current = this.app.states[this.app.states.length - 1]
+    }
+
+    this.view.clear()
+    this.view.loadFromDatalessJSON(current, () => {
+      this.view.renderAll()
+      this.corners = this.view.getObjects().filter(obj => obj.name === 'CORNER')
+      this.drawRoom()
+    })
+  }
+
+
+  /** Redo operation */
+  redo() {
+    let current = null
+
+    if (this.app.roomEdit) {
+      current = this.app.roomEditRedoStates.pop()
+      this.app.roomEditStates.push(current)
+    } else {
+      current = this.app.redoStates.pop()
+      this.app.states.push(current)
+    }
+
+    this.view.clear()
+    this.view.loadFromDatalessJSON(current, () => {
+      this.view.renderAll()
+      this.corners = this.view.getObjects().filter(obj => obj.name === 'CORNER')
+      this.drawRoom()
+    })
+  }
+
+
+  /** Copy operation */
+  copy() {
+    if (this.app.roomEdit)
+      return
+    const active = this.view.getActiveObject()
+    if (!active) {
+      return
+    }
+    active.clone(cloned => this.app.copied = cloned, ['name', 'hasControls'])
+  }
+
+  /** Paste operation */
+  paste() {
+    if (!this.app.copied || this.app.roomEdit) {
+      return
+    }
+    this.app.copied.clone((cloned) => {
+      this.view.discardActiveObject()
+      cloned.set({
+        left: cloned.left + RL_AISLEGAP,
+        top: cloned.top + RL_AISLEGAP
+      });
+      if (cloned.type === 'activeSelection') {
+        cloned.canvas = this.view
+        cloned.forEachObject(obj => this.view.add(obj))
+        cloned.setCoords()
+      } else {
+        this.view.add(cloned)
+      }
+      this.app.copied.top += RL_AISLEGAP
+      this.app.copied.left += RL_AISLEGAP
+      this.view.setActiveObject(cloned)
+      this.view.requestRenderAll()
+      this.saveState()
+    }, ['name', 'hasControls'])
+  }
+
+  /** Delete operation */
+  delete() {
+    if (this.app.roomEdit)
+      return
+    this.app.selections.forEach(selection => this.view.remove(selection))
+    this.view.discardActiveObject()
+    this.view.requestRenderAll()
+    this.saveState()
+  }
+
+  /** Rotate Operation */
+  rotate(clockwise = true) {
+    if (this.app.roomEdit)
+      return
+
+    let angle = RL_CTRL_KEY_DOWN ? 90 : 15
+    const obj = this.view.getActiveObject()
+
+    if (!obj) return
+
+    if ((obj.originX !== 'center' || obj.originY !== 'center') && obj.centeredRotation) {
+      obj.originX = 'center'
+      obj.originY = 'center'
+      obj.left += obj.width / 2
+      obj.top += obj.height / 2
+    }
+
+    angle = obj.angle + (clockwise ? angle : -angle)
+
+    if (angle > 360) angle -= 360
+    else if (angle < 0) angle += 360
+
+    obj.angle = angle
+    this.view.requestRenderAll()
+  }
+
+  /** Group */
+  group() {
+    if (this.app.roomEdit)
+      return
+
+    const active = this.view.getActiveObject()
+    if (!(this.app.selections.length > 1 && active instanceof fabric.ActiveSelection))
+      return
+
+    active.toGroup()
+    active.lockScalingX = true, active.lockScalingY = true
+    this.view.requestRenderAll()
+    this.saveState()
+  }
+
+  ungroup() {
+    if (this.app.roomEdit)
+      return
+
+    const active = this.view.getActiveObject()
+    if (!(active && active instanceof fabric.Group))
+      return
+
+    active.toActiveSelection()
+    active.lockScalingX = true, active.lockScalingY = true
+    this.view.requestRenderAll()
+    this.saveState()
+  }
+
+  move(direction, increament = 6) {
+    if (this.app.roomEdit)
+      return
+
+    const active = this.view.getActiveObject()
+    if (!active)
+      return
+    switch (direction) {
+      case 'LEFT':
+        active.left -= increament
+        break
+      case 'UP':
+        active.top -= increament
+        break
+      case 'RIGHT':
+        active.left += increament
+        break
+      case 'DOWN':
+        active.top += increament
+        break
+    }
+    this.view.requestRenderAll()
+    this.saveState()
+  }
+
+  placeInCenter(direction) {
+    const active = this.view.getActiveObject()
+    // const svg = active.toSVG()
+
+    if (!active)
+      return
+
+    if (direction === 'HORIZONTAL') {
+      active.left = RL_ROOM_SIZE.width / 2 - (active.originX === 'center' ? 0 : active.width / 2)
+    } else {
+      active.top = RL_ROOM_SIZE.height / 2 - (active.originX === 'center' ? 0 : active.height / 2)
+    }
+
+    active.setCoords()
+    this.view.requestRenderAll()
+    this.saveState()
   }
 
 }
