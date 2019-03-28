@@ -28,10 +28,11 @@ body {
     width: 90%;
   }
 }
-
-.canvas-container {
-  width: 100% !important;
-  height: 100% !important;
+.main-container {
+  .canvas-container {
+    width: 100% !important;
+    height: 100% !important;
+  }
 }
 
 mat-button-toggle {
@@ -39,4 +40,10 @@ mat-button-toggle {
     outline: none;
     border: none;
   }
+}
+
+.mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
+  font-size: 12px;
+  font-weight: normal;
+  line-height: none;
 }
