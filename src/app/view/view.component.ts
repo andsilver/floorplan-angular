@@ -1,31 +1,27 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { fabric } from 'fabric';
 import { AppService } from '../app.service';
+import * as _ from '../helpers'
 
-const { Canvas, Group, Rect, Line, Circle, Ellipse, Path, Polygon, Polyline, Triangle, Point } = fabric
+const {
+  RL_FILL,
+  RL_STROKE,
+  RL_VIEW_WIDTH,
+  RL_VIEW_HEIGHT,
+  RL_FOOT,
+  RL_AISLEGAP,
+  RL_ROOM_OUTER_SPACING,
+  RL_ROOM_INNER_SPACING,
+  RL_ROOM_STROKE,
+  RL_CORNER_FILL,
+  RL_UNGROUPABLES,
 
-const
-  RL_VIEW_WIDTH = 120,
-  RL_VIEW_HEIGHT = 60,
-  RL_FILL = '#FFF',
-  RL_STROKE = '#000',
-  RL_CHAIR_STROKE = '#999',
-  RL_CHAIR_FILL = '#FFF',
-  RL_CHAIR_TUCK = 6,
-  RL_FOOT = 12,
-  RL_AISLEGAP = 12 * 3,
-  RL_ROOM_OUTER_SPACING = 12,
-  RL_ROOM_INNER_SPACING = 4,
-  RL_ROOM_STROKE = '#666',
-  RL_DISABLED = { hasControls: false, selectable: false },
-  RL_CORNER_FILL = '#88f'
+  createTable,
+  createText,
+  createShape
+} = _
 
-let
-  RL_ROOM_SIZE = { width: 960, height: 480 },
-  RL_DEFAULT_CHAIR = null,
-  RL_CTRL_KEY_DOWN = false,
-  RL_MOVE_WALL_ID = -1
-
+const { Line, Circle, Point } = fabric
 
 
 @Component({
@@ -42,62 +38,27 @@ export class ViewComponent implements OnInit, AfterViewInit {
   view: fabric.Canvas;
   room: fabric.Group
   roomLayer: fabric.Group | fabric.Rect;
-
   corners = []
   walls: fabric.Line[] = []
-
   lastObjectDefinition = null;
   lastObject = null;
 
+  CTRL_KEY_DOWN = false;
+  MOVE_WALL_ID = -1
+  ROOM_SIZE = { width: 960, height: 480 }
+  DEFAULT_CHAIR = null
+
+
   constructor(public app: AppService) { }
 
-  onKeyDown(event: KeyboardEvent) {
-    // Ctrl Key is down
-    if (event.ctrlKey) {
-      RL_CTRL_KEY_DOWN = true
-      // Ctrl + Shift + Z
-      if (event.shiftKey && event.keyCode === 90) this.app.redo()
-      // Ctrl + Z
-      else if (event.keyCode === 90) this.app.undo()
-      // Ctrl + C
-      else if (event.keyCode === 67) this.app.copy()
-      // Ctrl + V
-      else if (event.keyCode === 86) this.paste()
-      // Ctrl + Left arrow
-      else if (event.keyCode === 37) this.rotate()
-      // Ctrl + Right arrow
-      else if (event.keyCode === 39) this.rotate(false)
-      // Ctrl + G
-      else if (event.keyCode === 71) this.group()
-    }
-    // Delete
-    else if (event.keyCode === 46) this.delete()
-    // Left Arrow
-    else if (event.keyCode === 37) this.move('LEFT')
-    // Up Arrow
-    else if (event.keyCode === 38) this.move('UP')
-    // Right Arrow
-    else if (event.keyCode === 39) this.move('RIGHT')
-    // Down Arrow
-    else if (event.keyCode === 40) this.move('DOWN')
-  }
 
-  onKeyUp(event: KeyboardEvent) {
-    if (event.key === 'Control') {
-      RL_CTRL_KEY_DOWN = false
-    }
-  }
 
   ngOnInit() {
-
-    this.app.roomEdition.subscribe(state => {
+    this.app.roomEdition.subscribe(doEdit => {
       this.corners.forEach(c => this.setCornerStyle(c))
       this.drawRoom()
-      if (state) {
-        this.editRoom()
-      } else {
-        this.cancelRoomEdition()
-      }
+      if (doEdit) this.editRoom()
+      else this.cancelRoomEdition()
     })
 
     this.app.insertObject.subscribe(res => {
@@ -105,7 +66,7 @@ export class ViewComponent implements OnInit, AfterViewInit {
       this.saveState()
     })
 
-    this.app.defaultChair.subscribe(res => RL_DEFAULT_CHAIR = res)
+    this.app.defaultChair.subscribe(res => this.DEFAULT_CHAIR = res)
 
     this.app.performOperation.subscribe(operation => {
       if (operation === 'UNDO')
@@ -133,42 +94,100 @@ export class ViewComponent implements OnInit, AfterViewInit {
     })
   }
 
+
+
   ngAfterViewInit() {
     /** Initialize canvas */
     this.setCanvasView()
     /** Add room */
-    this.setRoom(RL_ROOM_SIZE)
+    this.setRoom(this.ROOM_SIZE)
     this.saveState()
   }
+
+
 
   get room_origin() {
     return RL_ROOM_OUTER_SPACING + RL_ROOM_INNER_SPACING
   }
 
-  /**
-   * Canvas Init
+
+
+  onKeyDown(event: KeyboardEvent) {
+    // Ctrl Key is down
+    if (event.ctrlKey) {
+      this.CTRL_KEY_DOWN = true
+      // Ctrl + Shift + Z
+      if (event.shiftKey && event.keyCode === 90) this.app.redo()
+      // Ctrl + Z
+      else if (event.keyCode === 90) this.app.undo()
+      // Ctrl + C
+      else if (event.keyCode === 67) this.app.copy()
+      // Ctrl + V
+      else if (event.keyCode === 86) this.paste()
+      // Ctrl + Left arrow
+      else if (event.keyCode === 37) this.rotate()
+      // Ctrl + Right arrow
+      else if (event.keyCode === 39) this.rotate(false)
+      // Ctrl + G
+      else if (event.keyCode === 71) this.group()
+    }
+    // Delete
+    else if (event.keyCode === 46) this.delete()
+    // Left Arrow
+    else if (event.keyCode === 37) this.move('LEFT')
+    // Up Arrow
+    else if (event.keyCode === 38) this.move('UP')
+    // Right Arrow
+    else if (event.keyCode === 39) this.move('RIGHT')
+    // Down Arrow
+    else if (event.keyCode === 40) this.move('DOWN')
+  }
+
+
+
+  onKeyUp(event: KeyboardEvent) {
+    if (event.key === 'Control') {
+      this.CTRL_KEY_DOWN = false
+    }
+  }
+
+
+  setGroupableState() {
+    if (this.app.selections.length > 1) {
+      this.app.ungroupable = false
+      return
+    }
+
+    const obj = this.view.getActiveObject()
+    const type = obj.name ? obj.name.split(':')[0] : ''
+
+    if (RL_UNGROUPABLES.indexOf(type) > -1)
+      this.app.ungroupable = false
+    else
+      this.app.ungroupable = true
+  }
+
+
+  onSelected() {
+    const active = this.view.getActiveObject()
+    active.lockScalingX = true, active.lockScalingY = true
+    if (!active.name) {
+      active.name = 'GROUP'
+    }
+    this.app.selections = this.view.getActiveObjects()
+    this.setGroupableState()
+  }
+
+
+  /**********************************************************************************************************
+   * init the canvas view & bind events
+   * -------------------------------------------------------------------------------------------------------
    */
   setCanvasView() {
-    const canvas = new Canvas('main')
+    const canvas = new fabric.Canvas('main')
     canvas.setWidth(RL_VIEW_WIDTH * RL_FOOT)
     canvas.setHeight(RL_VIEW_HEIGHT * RL_FOOT)
-    // canvas.
     this.view = canvas
-
-    const determineUngroup = () => {
-      if (this.app.selections.length > 1) {
-        this.app.ungroupable = false
-        return
-      }
-
-      const obj = this.view.getActiveObject()
-      const type = obj.name ? obj.name.split(':')[0] : ''
-      if (type === 'CHAIR' || type === 'MISCELLANEOUS') {
-        this.app.ungroupable = false
-      } else {
-        this.app.ungroupable = true
-      }
-    }
 
     const cornersOfWall = (obj: fabric.Line) => {
       const id = Number(obj.name.split(':')[1])
@@ -182,10 +201,13 @@ export class ViewComponent implements OnInit, AfterViewInit {
     this.view.on('selection:created', (e: fabric.IEvent) => {
       if (this.app.roomEdit)
         return
-      const active = this.view.getActiveObject()
-      active.lockScalingX = true, active.lockScalingY = true
-      this.app.selections = this.view.getActiveObjects()
-      determineUngroup()
+      this.onSelected()
+    })
+
+    this.view.on('selection:updated', (e: fabric.IEvent) => {
+      if (this.app.roomEdit)
+        return
+      this.onSelected()
     })
 
     this.view.on('selection:cleared', (e: fabric.IEvent) => {
@@ -195,30 +217,12 @@ export class ViewComponent implements OnInit, AfterViewInit {
       this.app.ungroupable = false
     })
 
-    this.view.on('selection:updated', (e: fabric.IEvent) => {
-      if (this.app.roomEdit)
-        return
-      const active = this.view.getActiveObject()
-      active.lockScalingX = true, active.lockScalingY = true
-      this.app.selections = this.view.getActiveObjects()
-      determineUngroup()
-    })
-
     this.view.on('object:moved', () => {
-      if (RL_MOVE_WALL_ID !== -1) {
-        RL_MOVE_WALL_ID = -1
-        // for (let i = 0; i < this.walls.length; i++) {
-        //   let f = false
-        //   for (let j = i + 1; j < this.walls.length; j++) {
-        //     if (this.walls[i].intersectsWithObject(this.walls[j])) {
-        //       this.undo()
-        //       return
-        //     }
-        //   }
-        // }
-      }
+      if (this.MOVE_WALL_ID !== -1)
+        this.MOVE_WALL_ID = -1
       this.saveState()
     })
+
     this.view.on('object:rotated', () => this.saveState())
 
     this.view.on('mouse:down:before', (e: fabric.IEvent) => {
@@ -231,53 +235,60 @@ export class ViewComponent implements OnInit, AfterViewInit {
         const v0 = this.corners[v0Id]
         const v3 = this.corners[v3Id]
 
-        RL_MOVE_WALL_ID = v1Id
+        this.MOVE_WALL_ID = v1Id
 
         if ((v0.top === v1.top && v1.top === v2.top) || (v0.left === v1.left && v1.left === v2.left)) {
           this.corners.splice(v1Id, 0, this.drawCorner(new Point(v1.left, v1.top)))
-          RL_MOVE_WALL_ID = v1Id + 1
+          this.MOVE_WALL_ID = v1Id + 1
           v2Id += 1
         }
-        if ((v1.top === v2.top && v2.top === v3.top) || (v1.left === v2.left && v2.left === v3.left)) {
+
+        if ((v1.top === v2.top && v2.top === v3.top) || (v1.left === v2.left && v2.left === v3.left))
           this.corners.splice(v2Id + 1, 0, this.drawCorner(new Point(v2.left, v2.top)))
-        }
+
         this.drawRoom()
         this.saveState()
       }
     })
 
     this.view.on('object:moving', (e: fabric.IEvent) => {
-      if (RL_MOVE_WALL_ID !== -1) {
+      if (this.MOVE_WALL_ID !== -1) {
         const p = e['pointer']
-        const v1 = this.corners[RL_MOVE_WALL_ID]
-        const v2 = this.corners[(RL_MOVE_WALL_ID + 1) % this.corners.length]
+        const v1 = this.corners[this.MOVE_WALL_ID]
+        const v2 = this.corners[(this.MOVE_WALL_ID + 1) % this.corners.length]
         const direction = v1.left === v2.left ? 'HORIZONTAL' : 'VERTICAL'
 
         if (p.y < RL_ROOM_OUTER_SPACING) p.y = RL_ROOM_OUTER_SPACING
         if (p.x < RL_ROOM_OUTER_SPACING) p.x = RL_ROOM_OUTER_SPACING
 
-        if (direction === 'VERTICAL') {
+        if (direction === 'VERTICAL')
           v1.top = v2.top = p.y
-        } else {
+        else
           v1.left = v2.left = p.x
-        }
+
         this.drawRoom()
       }
     })
 
     this.view.on('mouse:up', (e: fabric.IEvent) => {
       const obj = e.target
+
       if (this.app.roomEdit && this.app.roomEditOperate === 'CORNER' && obj && obj.name.indexOf('WALL') > -1 && obj instanceof Line) {
         const p = e['pointer']
         const { v1, v1Id, v2, v2Id } = cornersOfWall(obj)
         const ind = v1Id < v2Id ? v1Id : v2Id
+
         if (v1.left === v2.left)
           p.x = v1.left
         else if (v1.top === v2.top)
           p.y = v1.top
+
         const newCorner = this.drawCorner(new Point(p.x, p.y))
-        if (Math.abs(v1Id - v2Id) != 1) this.corners.push(newCorner)
-        else this.corners.splice(ind + 1, 0, newCorner)
+
+        if (Math.abs(v1Id - v2Id) != 1)
+          this.corners.push(newCorner)
+        else
+          this.corners.splice(ind + 1, 0, newCorner)
 
         this.drawRoom()
         this.saveState()
@@ -285,12 +296,14 @@ export class ViewComponent implements OnInit, AfterViewInit {
     })
   }
 
-  /**
-   * Function to change the room
-   * @param room : Object to represent a room
-   */
-  setRoom({ title = 'default', width, height }) {
 
+
+
+  /**********************************************************************************************************
+   * draw Rooms defined in Model
+   * -------------------------------------------------------------------------------------------------------
+   */
+  setRoom({ width, height }) {
     if (this.walls.length) {
       this.view.remove(...this.walls)
       this.view.renderAll()
@@ -302,10 +315,14 @@ export class ViewComponent implements OnInit, AfterViewInit {
     const RB = new Point(RT.x, LB.y)
 
     this.corners = [LT, RT, RB, LB].map(p => this.drawCorner(p))
-
     this.drawRoom()
   }
 
+
+  /**********************************************************************************************************
+   * set corner according to current edition status
+   * -------------------------------------------------------------------------------------------------------
+   */
   setCornerStyle(c: fabric.Circle) {
     c.moveCursor = this.view.freeDrawingCursor
     c.hoverCursor = this.view.freeDrawingCursor
@@ -315,6 +332,12 @@ export class ViewComponent implements OnInit, AfterViewInit {
     c.set('fill', this.app.roomEdit ? RL_CORNER_FILL : RL_ROOM_STROKE)
   }
 
+
+
+  /**********************************************************************************************************
+   * draw corner
+   * -------------------------------------------------------------------------------------------------------
+   */
   drawCorner(p: fabric.Point) {
     const c = new Circle({
       left: p.x,
@@ -329,6 +352,11 @@ export class ViewComponent implements OnInit, AfterViewInit {
     return c
   }
 
+
+  /**********************************************************************************************************
+   * draw room
+   * -------------------------------------------------------------------------------------------------------
+   */
   drawRoom() {
 
     const exists = this.view.getObjects().filter(obj => obj.name.indexOf('WALL') > -1 || obj.name === 'CORNER')
@@ -366,12 +394,23 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
     this.view.add(...this.walls)
     this.walls.forEach(w => w.sendToBack())
-    RL_ROOM_SIZE = { width: RB.x - LT.x, height: RB.y - LT.y }
+    this.ROOM_SIZE = { width: RB.x - LT.x, height: RB.y - LT.y }
+  }
+
+
+
+  /**********************************************************************************************************
+   * check an object is related room edition
+   * -------------------------------------------------------------------------------------------------------
+   */
+  isRoomObject(object: any) {
+    const names = ['WALL', 'CORNER', 'DOOR', 'WINDOW']
+    return names.some(n => object.name.indexOf(n) > -1)
   }
 
   editRoom() {
     this.view.getObjects().forEach(r => {
-      if (r.name.indexOf('WALL') === -1 && r.name !== 'CORNER') {
+      if (!this.isRoomObject(r)) {
         r.selectable = false
         r.evented = false
         r.opacity = 0.3
@@ -383,7 +422,7 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
   cancelRoomEdition() {
     this.view.getObjects().forEach(r => {
-      if (r.name.indexOf('WALL') === -1 && r.name !== 'CORNER') {
+      if (!this.isRoomObject(r)) {
         r.selectable = true
         r.evented = true
         r.opacity = 1
@@ -400,12 +439,59 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
     let group;
 
-    if (type === 'CHAIR') {
-      group = this.createShape(object)
-    } else if (type === 'MISCELLANEOUS') {
-      group = this.createShape(object, RL_STROKE, RL_FILL, type)
-    } else if (type === 'TABLE') {
-      group = this.createTable(object)
+    if (type === 'TABLE')
+      group = createTable(object, this.DEFAULT_CHAIR)
+    else if (type === 'TEXT')
+      group = createText(object)
+    else if (type === 'LAYOUT')
+      group = object
+    else
+      group = createShape(object, RL_STROKE, RL_FILL, type)
+
+    if (type === 'DOOR' || type === 'WINDOW') {
+      group.originX = 'left'
+      group.originY = 'top'
+
+      const dws = this.filterObjects(['DOOR', 'WINDOW'])
+      const dw = dws.length ? dws[dws.length - 1] : null
+      if (!dw) {
+        const wall = this.walls[0]
+        group.left = wall.x1 + RL_AISLEGAP
+        group.top = wall.y1 - RL_ROOM_INNER_SPACING / 2
+      } else {
+        const isHorizon = dw.angle % 180 === 0
+        group.left = dw.left, group.top = dw.top, group.angle = dw.angle
+
+        let wall = null, placeOnNextWall = false
+
+        if (isHorizon) {
+          wall = this.walls.find(w => Math.abs(w.top - group.top) === RL_ROOM_INNER_SPACING / 2)
+          group.left += (RL_AISLEGAP + dw.width)
+          if (group.left + group.width > wall.x2)
+            placeOnNextWall = true
+        }
+        else {
+          wall = this.walls.find(w => Math.abs(w.left - group.left) === RL_ROOM_INNER_SPACING / 2)
+          group.top += RL_AISLEGAP + dw.height
+          if (group.top + group.height > wall.y2)
+            placeOnNextWall = true
+        }
+
+        if (placeOnNextWall) {
+          const nextWall = this.walls[(Number(wall.name.split(':')[1]) + 1) % this.walls.length]
+          group.angle += 90
+          if (!isHorizon)
+            group.left = nextWall.x1 + RL_AISLEGAP, group.top = nextWall.y1 - RL_ROOM_INNER_SPACING / 2
+          else
+            group.left = nextWall.x1 + RL_ROOM_INNER_SPACING / 2, group.top = nextWall.y1 + RL_AISLEGAP
+        }
+      }
+
+      group.selectable = false
+      group.hasBorders = false
+      this.view.add(group)
+
+      return
     }
 
     // retrieve spacing from object, use rlAisleGap if not specified
@@ -429,13 +515,16 @@ export class ViewComponent implements OnInit, AfterViewInit {
       const useLR = Math.max(newLR, lastLR), useTB = Math.max(newTB, lastTB);
 
       // using left/top vocab, though all objects are now centered
-      let newLeft = this.lastObject.left + this.lastObjectDefinition.width + useLR;
+      const lastWidth = this.lastObjectDefinition.width || 100
+      const lastHeight = this.lastObjectDefinition.height || 40
+
+      let newLeft = this.lastObject.left + lastWidth + useLR;
       let newTop = this.lastObject.top;
 
       // make sure we fit left to right, including our required right spacing
-      if (newLeft + group.width + newLR > RL_ROOM_SIZE.width) {
+      if (newLeft + group.width + newLR > this.ROOM_SIZE.width) {
         newLeft = newLR + (group.width / 2);
-        newTop += this.lastObjectDefinition.height + useTB;
+        newTop += lastHeight + useTB;
       }
 
       group.left = newLeft;
@@ -452,223 +541,6 @@ export class ViewComponent implements OnInit, AfterViewInit {
     this.lastObjectDefinition = object
   }
 
-
-
-  /** Adding Chairs */
-  createShape(object: any, stroke = RL_CHAIR_STROKE, fill = RL_CHAIR_FILL, type: string = 'CHAIR') {
-
-    if (!object.parts) {
-      return {}
-    }
-
-    const parts = object.parts.map(obj => this.createBasicShape(obj, stroke, fill))
-    const group = new Group(parts, {
-      name: `${type}:${object.title}`,
-      hasControls: false,
-      originX: 'center',
-      originY: 'center'
-    })
-
-    return (group)
-  }
-
-
-  // All Create[Name]Object() functions should return a group
-
-  createTable(def: any, type: string = 'TABLE') {
-    // tables with chairs have the chairs full-height around the table
-
-    const components = [];
-    let index = 0;
-
-    // Note that we're using the provided width and height for table placement
-    // Issues may arise if rendered shape is larger/smaller, since it's positioned from center point
-    const chairWidth = RL_DEFAULT_CHAIR.width;
-    const chairHeight = RL_DEFAULT_CHAIR.height;
-    const tableLeft = def.leftChairs > 0 ? (chairHeight - RL_CHAIR_TUCK) : 0;
-    const tableTop = (chairHeight - RL_CHAIR_TUCK);
-
-    if (def.shape == 'circle') {
-
-      const origin_x = def.width / 2 + chairHeight - RL_CHAIR_TUCK;
-      const origin_y = def.width / 2 + chairHeight - RL_CHAIR_TUCK;
-      const x2 = origin_x;
-      const y2 = 0 + chairHeight / 2;
-
-      const rotation_origin = new fabric.Point(origin_x, origin_y);
-
-      const tableRadius = def.width / 2;
-      const radius = def.width / 2 + chairHeight;   // outer radius of whole shape unit
-      let angle = 0;
-      const angleIncrement = 360 / (def.chairs > 0 ? def.chairs : 1);
-
-      for (let x = 0; x < def.chairs; ++x) {
-        // Note that width and height are the same for circle tables
-        // width of whole area when done
-        const width = def.width + chairHeight - (RL_CHAIR_TUCK * 2);
-
-        components[index] = this.createShape(RL_DEFAULT_CHAIR, RL_CHAIR_STROKE, RL_CHAIR_FILL);
-
-        const angle_radians = fabric.util.degreesToRadians(angle);
-        const end = fabric.util.rotatePoint(new fabric.Point(x2, y2), rotation_origin, angle_radians);
-        components[index].left = end.x;
-        components[index].top = end.y;
-        components[index].angle = (angle + 180 > 360) ? (angle - 180) : (angle + 180);
-        index++;
-        angle += angleIncrement;
-      }
-
-      const tableCircle = {
-        left: origin_x,
-        top: origin_y,
-        radius: tableRadius,
-        fill: RL_FILL,
-        stroke: RL_STROKE,
-        originX: 'center',
-        originY: 'center',
-        name: 'DESK'
-      };
-      components[index] = new fabric.Circle(tableCircle);
-
-    } else if (def.shape == 'rect') {
-      const tableRect = {
-        width: def.width,
-        height: def.height,
-        fill: RL_FILL,
-        stroke: RL_STROKE,
-        name: 'DESK'
-      };
-
-      // calculate gap between chairs, with extra for gap to end of table
-      let gap = 0, firstOffset = 0, leftOffset = 0, topOffset = 0;
-
-      // top chair row
-      // Note that chairs 'look up' by default, so the bottom row isn't rotated
-      // and the top row is.
-      gap = (def.width - (def.topChairs * chairWidth)) / (def.topChairs + 1);
-      firstOffset = gap + tableLeft;
-      leftOffset = firstOffset;
-      topOffset = 0;
-
-      for (let x = 0; x < def.topChairs; x++) {
-        components[index] = this.createShape(RL_DEFAULT_CHAIR, RL_CHAIR_STROKE, RL_CHAIR_FILL);
-        components[index].angle = -180;
-        components[index].left = leftOffset + chairWidth / 2;
-        components[index].top = topOffset + chairHeight / 2;
-        index++;
-
-        leftOffset += (chairWidth + gap);
-      }
-
-      // bottom chair row
-      gap = (def.width - (def.bottomChairs * chairWidth)) / (def.bottomChairs + 1);
-      firstOffset = gap + tableLeft;
-      leftOffset = firstOffset;
-      topOffset = tableRect.height + chairHeight - (RL_CHAIR_TUCK * 2);
-
-      for (let x = 0; x < def.bottomChairs; x++) {
-        components[index] = this.createShape(RL_DEFAULT_CHAIR, RL_CHAIR_STROKE, RL_CHAIR_FILL);
-        components[index].left = leftOffset + chairWidth / 2;
-        components[index].top = topOffset + chairWidth / 2;
-        ++index;
-
-        leftOffset += (chairWidth + gap);
-      }
-
-      // left chair row
-      gap = (def.height - (def.leftChairs * chairWidth)) / (def.leftChairs + 1);
-      leftOffset = chairWidth / 2;
-      topOffset = tableTop + gap + chairWidth / 2;  // top of table plus first gap, then to center
-
-      for (let x = 0; x < def.leftChairs; x++) {
-        components[index] = this.createShape(RL_DEFAULT_CHAIR, RL_CHAIR_STROKE, RL_CHAIR_FILL);
-        components[index].angle = 90;
-        components[index].left = leftOffset;
-        components[index].top = topOffset;
-        ++index;
-
-        topOffset += (chairWidth + gap);
-      }
-
-      // right chair row
-      gap = (def.height - (def.rightChairs * chairWidth)) / (def.rightChairs + 1);
-      leftOffset = tableRect.width + chairWidth / 2;
-      topOffset = tableTop + gap + chairWidth / 2;  // top of table plus first gap, then to center
-
-      for (let x = 0; x < def.rightChairs; x++) {
-        components[index] = this.createShape(RL_DEFAULT_CHAIR, RL_CHAIR_STROKE, RL_CHAIR_FILL);
-        components[index].angle = -90;
-        components[index].left = leftOffset + chairHeight - (RL_CHAIR_TUCK * 2);
-        components[index].top = topOffset;
-        ++index;
-
-        topOffset += (chairWidth + gap);
-      }
-
-      // add table on top of chairs
-      components[index] = new fabric.Rect(tableRect);
-      components[index].left = tableLeft;
-      components[index].top = tableTop;
-    }
-
-    const tableGroup = new fabric.Group(components, {
-      left: 0,
-      top: 0,
-      hasControls: false,
-      // set origin for all groups to center
-      originX: 'center',
-      originY: 'center',
-      name: `${type}:${def.title}`
-    });
-
-    return tableGroup;
-  }
-
-
-  /** Create Basic Shape  */
-  createBasicShape(part: any, stroke: string = '#aaaaaa', fill: string = 'white') {
-    if (part.definition.fill == null) part.definition.fill = fill;
-
-    if (part.definition.stroke == null) part.definition.stroke = stroke;
-    else if (part.definition.stroke == 'chair') part.definition.stroke = RL_CHAIR_STROKE;
-
-    // lines and paths need origin set to center
-    // if (part.type === 'line' || part.type === 'path') {
-    // part.definition.originX = 'center';
-    // part.definition.originY = 'center';
-    // }
-
-    let fObj
-
-    switch (part.type) {
-      case 'circle':
-        fObj = new Circle(part.definition)
-        break
-      case 'ellipse':
-        fObj = new Ellipse(part.definition)
-        break
-      case 'line':
-        fObj = new Line(part.line, part.definition)
-        break
-      case 'path':
-        fObj = new Path(part.path, part.definition)
-        break
-      case 'polygon':
-        fObj = new Polygon(part.definition)
-        break
-      case 'polyline':
-        fObj = new Polyline(part.definition)
-        break
-      case 'rect':
-        fObj = new Rect(part.definition);
-        break
-      case 'triangle':
-        fObj = new Triangle(part.definition);
-        break
-    }
-
-    return (fObj)
-  }
 
   /** Save current state */
   saveState() {
@@ -772,7 +644,7 @@ export class ViewComponent implements OnInit, AfterViewInit {
     if (this.app.roomEdit)
       return
 
-    let angle = RL_CTRL_KEY_DOWN ? 90 : 15
+    let angle = this.CTRL_KEY_DOWN ? 90 : 15
     const obj = this.view.getActiveObject()
 
     if (!obj) return
@@ -804,7 +676,8 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
     active.toGroup()
     active.lockScalingX = true, active.lockScalingY = true
-    this.view.requestRenderAll()
+    this.onSelected()
+    this.view.renderAll()
     this.saveState()
   }
 
@@ -818,7 +691,8 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
     active.toActiveSelection()
     active.lockScalingX = true, active.lockScalingY = true
-    this.view.requestRenderAll()
+    this.onSelected()
+    this.view.renderAll()
     this.saveState()
   }
 
@@ -849,20 +723,23 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
   placeInCenter(direction) {
     const active = this.view.getActiveObject()
-    // const svg = active.toSVG()
 
     if (!active)
       return
 
     if (direction === 'HORIZONTAL') {
-      active.left = RL_ROOM_SIZE.width / 2 - (active.originX === 'center' ? 0 : active.width / 2)
+      active.left = this.ROOM_SIZE.width / 2 - (active.originX === 'center' ? 0 : active.width / 2)
     } else {
-      active.top = RL_ROOM_SIZE.height / 2 - (active.originX === 'center' ? 0 : active.height / 2)
+      active.top = this.ROOM_SIZE.height / 2 - (active.originX === 'center' ? 0 : active.height / 2)
     }
 
     active.setCoords()
     this.view.requestRenderAll()
     this.saveState()
+  }
+
+  filterObjects(names: string[]) {
+    return this.view.getObjects().filter(obj => names.some(n => obj.name.indexOf(n) > -1))
   }
 
 }

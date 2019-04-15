@@ -28,6 +28,7 @@ body {
     width: 90%;
   }
 }
+
 .main-container {
   .canvas-container {
     width: 100% !important;
@@ -36,7 +37,9 @@ body {
 }
 
 mat-button-toggle {
-  &:focus, &:active {
+
+  &:focus,
+  &:active {
     outline: none;
     border: none;
   }
@@ -46,4 +49,21 @@ mat-button-toggle {
   font-size: 12px;
   font-weight: normal;
   line-height: none;
+}
+
+.mat-form-field-appearance-outline.mat-form-field-can-float .mat-input-server:focus+.mat-form-field-label-wrapper .mat-form-field-label,
+.mat-form-field-appearance-outline.mat-form-field-can-float.mat-form-field-should-float .mat-form-field-label {
+  transform: translateY(-1.19375em) scale(.75) !important;
+}
+
+.mat-form-field-appearance-outline .mat-form-field-label {
+  top: 1.34375em;
+}
+
+.mat-form-field-appearance-outline .mat-form-field-infix {
+  padding: .5em 0;
+}
+
+.mat-form-field-subscript-wrapper {
+  margin-top: .16667em;
 }

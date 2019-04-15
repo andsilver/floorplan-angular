@@ -302,6 +302,65 @@ const FURNISHINGS =
         //{ "type": "line", "line": [ 0,0,100,100 ], "definition": { stroke: "#00ffff", strokeWidth: "2" } }
       ]
     }
+  ],
+  doors: [
+    {
+      title: 'Narrow Door (28" wide)',
+      parts: [
+        { type: 'rect', definition: { left: 0, width: 28, top: -2, height: 4, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
+        { type: 'line', line: [0, -2, 0, 30], definition: { stroke: 'black', strokeWidth: 1 } },
+        { type: 'path', path: 'M 0 30 Q 28, 30, 28, 2', definition: { stroke: '#999', strokeWidth: 1, fill: 'transparent' } },
+      ]
+    }, {
+      title: 'Normal Door (32" wide)',
+      parts: [
+        { type: 'rect', definition: { left: 0, width: 32, top: -2, height: 4, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
+        { type: 'line', line: [0, -2, 0, 34], definition: { stroke: 'black', strokeWidth: 1 } },
+        { type: 'path', path: 'M 0 34 Q 32, 34, 32, 2', definition: { stroke: '#999', strokeWidth: 1, fill: 'transparent' } },
+      ]
+    }, {
+      title: 'Wide Door (36" wide)',
+      parts: [
+        { type: 'rect', definition: { left: 0, width: 36, top: -2, height: 4, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
+        { type: 'line', line: [0, -2, 0, 38], definition: { stroke: 'black', strokeWidth: 1 } },
+        { type: 'path', path: 'M 0 38 Q 36, 38, 36, 2', definition: { stroke: '#999', strokeWidth: 1, fill: 'transparent' } },
+      ]
+    }, {
+      title: 'Double Doors (64" wide)',
+      parts: [
+        { type: 'rect', definition: { left: 0, width: 64, top: -2, height: 4, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
+        { type: 'line', line: [0, -2, 0, 34], definition: { stroke: 'black', strokeWidth: 1 } },
+        { type: 'path', path: 'M 0 34 Q 32, 34, 32, 2', definition: { stroke: '#999', strokeWidth: 1, fill: 'transparent' } },
+        { type: 'line', line: [64, -2, 64, 34], definition: { stroke: 'black', strokeWidth: 1 } },
+        { type: 'path', path: 'M 32 2 Q 32, 34, 64, 34', definition: { stroke: '#999', strokeWidth: 1, fill: 'transparent' } },
+      ]
+    }
+  ],
+  windows: [
+    {
+      title: '2’ Window (24” wide)',
+      parts: [
+        { type: 'rect', definition: { left: 0, width: 24, top: 0, height: 3, fill: 'white', strokeWidth: 1, originX: 'left', originY: 'top' } },
+      ]
+    },
+    {
+      title: '3’ Window (36” wide)',
+      parts: [
+        { type: 'rect', definition: { left: 0, width: 36, top: 0, height: 3, fill: 'white', strokeWidth: 1, originX: 'left', originY: 'top' } },
+      ]
+    },
+    {
+      title: '4’ Window (48” wide)',
+      parts: [
+        { type: 'rect', definition: { left: 0, width: 48, top: 0, height: 3, fill: 'white', strokeWidth: 1, originX: 'left', originY: 'top' } },
+      ]
+    },
+    {
+      title: '6’ Window (72” wide)',
+      parts: [
+        { type: 'rect', definition: { left: 0, width: 72, top: 0, height: 3, fill: 'white', strokeWidth: 1, originX: 'left', originY: 'top' } },
+      ]
+    }
   ]
 };
 

@@ -1,5 +1,5 @@
 mat-drawer {
-  width: 400px;
+  width: 350px;
 }
 
 mat-drawer-container {
@@ -27,5 +27,30 @@ mat-drawer-container {
   .preview-title {
     margin-top: 8px;
     text-align: center
+  }
+}
+
+.status-bar {
+  border-top: 1px solid rgba(0,0,0,.12);
+  background: #ececec;
+  min-height: 79px;
+  width: 100%;
+  .status-bar-item {
+    td {
+      padding: 10px;
+      border-bottom: 1px solid rgba(0,0,0,.12);
+    }
+    span {
+      margin-right: 15px;
+    }
+  }
+}
+
+.new-text {
+  mat-radio-group {
+    padding-left: 12px;
+    mat-radio-button {
+      margin-right: 16px;
+    }
   }
 }

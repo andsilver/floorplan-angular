@@ -1,0 +1,63 @@
+<div class="layout-chairs">
+  <div>
+    <form [formGroup]="rectBlock" fxLayout="column">
+      <div>
+        <mat-form-field>
+          <mat-label>Select Chair</mat-label>
+          <mat-select formControlName="chair">
+            <mat-option *ngFor="let chair of chairs; let i=index;" [value]="i">{{chair.title}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div fxLayout fxLayoutGap="20px">
+        <div class="layout-option">
+          <mat-form-field>
+            <input type="number" min="1" max="50" formControlName="rows" matInput placeholder="Rows">
+            <mat-hint>Between 1 to 50</mat-hint>
+          </mat-form-field>
+        </div>
+        <div class="layout-option">
+          <mat-form-field>
+            <input type="number" formControlName="chairs" matInput placeholder="Chairs in a row">
+          </mat-form-field>
+        </div>
+        <div class="layout-option">
+          <mat-form-field>
+            <input type="number" min="0" max="6" formControlName="spacing_chair" matInput
+              placeholder="Spacing between chairs">
+            <mat-hint>Between 0 to 6</mat-hint>
+          </mat-form-field>
+        </div>
+        <div>
+          <mat-form-field>
+            <input type="number" min="0" formControlName="spacing_row" matInput placeholder="Spacing between rows">
+          </mat-form-field>
+        </div>
+      </div>
+      <div>
+        <div class="layout-option">
+          <mat-form-field>
+            <mat-label>Sections</mat-label>
+            <mat-select formControlName="sections">
+              <mat-option *ngFor="let opt of [1, 2, 3, 4]; let i=index;" [value]="opt">{{opt}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+      <form formArrayName="spacing_sections" fxLayout fxLayoutGap="20px">
+        <div class="layout-option" *ngFor="let sec of spacing_sections | slice:0:sections-1; let i=index">
+          <mat-form-field>
+            <input matInput [formControlName]="i" type="number">
+          </mat-form-field>
+        </div>
+      </form>
+    </form>
+  </div>
+  <div>
+    <canvas id="layout_chairs"></canvas>
+  </div>
+  <div style="margin-top: 1rem">
+    <button mat-raised-button color="primary" (click)="create()">Create</button>
+    <button style="margin-left: 1rem" mat-button color="primary" (click)="cancel()">Cancel</button>
+  </div>
+</div>

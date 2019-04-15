@@ -3,10 +3,12 @@ import { NgModule } from '@angular/core';
 import {
   MatButtonModule,
   MatButtonToggleModule,
+  MatDialogModule,
   MatDividerModule,
   MatExpansionModule,
   MatFormFieldModule,
   MatIconModule,
+  MatInputModule,
   MatListModule,
   MatMenuModule,
   MatRadioModule,
@@ -19,15 +21,19 @@ import {
   FontAwesomeModule
 } from '@fortawesome/angular-fontawesome'
 
+import { FlexLayoutModule } from '@angular/flex-layout';
+
 @NgModule({
   imports: [
     FontAwesomeModule,
     MatButtonModule,
     MatButtonToggleModule,
+    MatDialogModule,
     MatDividerModule,
     MatExpansionModule,
     MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatListModule,
     MatMenuModule,
     MatRadioModule,
@@ -40,10 +46,12 @@ import {
     FontAwesomeModule,
     MatButtonModule,
     MatButtonToggleModule,
+    MatDialogModule,
     MatDividerModule,
     MatExpansionModule,
     MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatListModule,
     MatMenuModule,
     MatRadioModule,
@@ -51,6 +59,7 @@ import {
     MatSidenavModule,
     MatToolbarModule,
     MatTooltipModule,
+    FlexLayoutModule
   ],
   providers: []
 })
