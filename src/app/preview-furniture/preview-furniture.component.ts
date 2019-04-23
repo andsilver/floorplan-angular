@@ -2,7 +2,7 @@ import { Component, OnInit, Input, AfterViewInit } from '@angular/core';
 import { fabric } from 'fabric';
 import * as uuid from 'uuid'
 
-import { createShape, createTable, RL_FILL, RL_STROKE, RL_PREVIEW_HEIGHT, RL_PREVIEW_WIDTH } from '../helpers'
+import { RL_PREVIEW_HEIGHT, RL_PREVIEW_WIDTH, createFurniture } from '../helpers'
 import { AppService } from '../app.service';
 
 let RL_DEFAULT_CHAIR = null
@@ -45,16 +45,7 @@ export class PreviewFurnitureComponent implements OnInit, AfterViewInit {
 
   handleObjectInsertion({ type, object }) {
 
-    let group;
-
-    if (type === 'CHAIR') {
-      group = createShape(object)
-    } else if (type === 'MISCELLANEOUS') {
-      group = createShape(object, RL_STROKE, RL_FILL, type)
-    } else if (type === 'TABLE') {
-      group = createTable(object, RL_DEFAULT_CHAIR)
-    } else if (type === 'DOOR')
-      group = createShape(object, RL_STROKE, RL_FILL, type)
+    const group = createFurniture(type, object, RL_DEFAULT_CHAIR)
 
     group.left = RL_PREVIEW_WIDTH / 2
     group.top = RL_PREVIEW_HEIGHT / 2

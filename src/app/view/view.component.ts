@@ -22,6 +22,10 @@ const {
 } = _
 
 const { Line, Circle, Point } = fabric
+const
+  HORIZONTAL = 'HORIZONTAL',
+  VERTICAL = 'VERTICAL',
+  OFFSET = RL_ROOM_INNER_SPACING / 2
 
 
 @Component({
@@ -47,7 +51,7 @@ export class ViewComponent implements OnInit, AfterViewInit {
   MOVE_WALL_ID = -1
   ROOM_SIZE = { width: 960, height: 480 }
   DEFAULT_CHAIR = null
-
+  REMOVE_DW = false
 
   constructor(public app: AppService) { }
 
@@ -228,7 +232,7 @@ export class ViewComponent implements OnInit, AfterViewInit {
     this.view.on('mouse:down:before', (e: fabric.IEvent) => {
       const obj = e.target
 
-      if (this.app.roomEdit && this.app.roomEditOperate === 'WALL' && obj && obj.name.indexOf('WALL') > -1 && obj instanceof Line) {
+      if (this.app.roomEdit && obj && obj.name.indexOf('WALL') > -1 && obj instanceof Line) {
         let { v1, v2, v1Id, v2Id } = cornersOfWall(obj)
         const v0Id = (v1Id === 0) ? this.corners.length - 1 : v1Id - 1
         const v3Id = (v2Id === this.corners.length - 1) ? 0 : v2Id + 1
@@ -268,9 +272,53 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
         this.drawRoom()
       }
+
+      const obj = e.target
+      const point = e['pointer']
+
+      if (obj && this.isDW(obj) && obj instanceof fabric.Group) {
+        let wall, distance = 999
+        const Left = (wall) => wall.x1 < wall.x2 ? wall.x1 : wall.x2
+        const Top = (wall) => wall.y1 < wall.y2 ? wall.y1 : wall.y2
+        const dist2 = (v, w) => (v.x - w.x) * (v.x - w.x) + (v.y - w.y) * (v.y - w.y)
+        const distToSegmentSquared = (p, v, w) => {
+          var l2 = dist2(v, w);
+          if (l2 == 0) return dist2(p, v);
+          var t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+          if (t < 0) return dist2(p, v);
+          if (t > 1) return dist2(p, w);
+          return dist2(p, { x: v.x + t * (w.x - v.x), y: v.y + t * (w.y - v.y) });
+        }
+        const point_to_line = (p, v, w) => Math.sqrt(distToSegmentSquared(p, v, w))
+
+        this.walls.forEach(w => {
+          const d = point_to_line(point, { x: w.x1, y: w.y1 }, { x: w.x2, y: w.y2 })
+          if (d < distance)
+            distance = d, wall = w
+        })
+
+        if (distance > 20)
+          this.REMOVE_DW = true
+        else {
+          this.REMOVE_DW = false
+          const direction = this.directionOfWall(wall)
+          if (direction === HORIZONTAL)
+            this.locateDW(obj, wall, point.x, Top(wall))
+          else
+            this.locateDW(obj, wall, Left(wall), point.y)
+        }
+      }
     })
 
     this.view.on('mouse:up', (e: fabric.IEvent) => {
+      const obj = e.target
+      if (this.REMOVE_DW) {
+        this.view.remove(obj)
+        this.REMOVE_DW = false
+      }
+    })
+
+    this.view.on('mouse:dblclick', (e: fabric.IEvent) => {
       const obj = e.target
 
       if (this.app.roomEdit && this.app.roomEditOperate === 'CORNER' && obj && obj.name.indexOf('WALL') > -1 && obj instanceof Line) {
@@ -370,13 +418,11 @@ export class ViewComponent implements OnInit, AfterViewInit {
       name: `WALL:${index}`,
       originX: 'center',
       originY: 'center',
-      hoverCursor: this.app.roomEdit ? (this.app.roomEditOperate === 'CORNER' ? 'pointer' : this.view.moveCursor) : this.view.defaultCursor,
+      hoverCursor: this.app.roomEdit ? this.view.moveCursor : this.view.defaultCursor,
       hasControls: false,
       hasBorders: false,
       selectable: this.app.roomEdit,
-      evented: this.app.roomEdit,
-      lockMovementX: this.app.roomEditOperate !== 'WALL',
-      lockMovementY: this.app.roomEditOperate !== 'WALL'
+      evented: this.app.roomEdit
     })
 
     let LT = new Point(9999, 9999), RB = new Point(0, 0)
@@ -398,13 +444,40 @@ export class ViewComponent implements OnInit, AfterViewInit {
   }
 
 
+  locateDW(dw: fabric.Group, wall: fabric.Line, x: number, y: number) {
+    const dWall = this.directionOfWall(wall)
+    const dDW = dw.angle % 180 === 0 ? HORIZONTAL : VERTICAL
+    if (dWall != dDW)
+      dw.angle = (dw.angle + 90) % 360
+    dw.top = y, dw.left = x
+    const center = dw.getCenterPoint()
+    if (dWall === HORIZONTAL)
+      center.y < dw.top ? dw.top += OFFSET : dw.top -= OFFSET
+    else
+      center.x < dw.left ? dw.left += OFFSET : dw.left -= OFFSET
+    return dw
+  }
+
+  setDWOrigin(dw: fabric.Group) {
+    if (!dw.flipX && !dw.flipY)
+      dw.originX = 'left', dw.originY = 'top'
+    else if (dw.flipX && !dw.flipY)
+      dw.originX = 'right', dw.originY = 'top'
+    else if (!dw.flipX && dw.flipY)
+      dw.originX = 'left', dw.originY = 'bottom'
+    else if (dw.flipX && dw.flipY)
+      dw.originX = 'right', dw.originY = 'bottom'
+    return dw
+  }
+
+
 
   /**********************************************************************************************************
    * check an object is related room edition
    * -------------------------------------------------------------------------------------------------------
    */
   isRoomObject(object: any) {
-    const names = ['WALL', 'CORNER', 'DOOR', 'WINDOW']
+    const names = ['WALL', 'CORNER']
     return names.some(n => object.name.indexOf(n) > -1)
   }
 
@@ -414,6 +487,9 @@ export class ViewComponent implements OnInit, AfterViewInit {
         r.selectable = false
         r.evented = false
         r.opacity = 0.3
+      } else {
+        r.selectable = true
+        r.evented = true
       }
     })
     if (this.app.roomEditStates.length === 0)
@@ -426,6 +502,9 @@ export class ViewComponent implements OnInit, AfterViewInit {
         r.selectable = true
         r.evented = true
         r.opacity = 1
+      } else {
+        r.selectable = false
+        r.evented = false
       }
     })
   }
@@ -437,57 +516,56 @@ export class ViewComponent implements OnInit, AfterViewInit {
       return
     }
 
-    let group;
-
-    if (type === 'TABLE')
-      group = createTable(object, this.DEFAULT_CHAIR)
-    else if (type === 'TEXT')
-      group = createText(object)
-    else if (type === 'LAYOUT')
-      group = object
-    else
-      group = createShape(object, RL_STROKE, RL_FILL, type)
+    const group = _.createFurniture(type, object, this.DEFAULT_CHAIR)
 
     if (type === 'DOOR' || type === 'WINDOW') {
-      group.originX = 'left'
+      group.originX = 'center'
       group.originY = 'top'
+
 
       const dws = this.filterObjects(['DOOR', 'WINDOW'])
       const dw = dws.length ? dws[dws.length - 1] : null
+      const Left = (wall) => wall.x1 < wall.x2 ? wall.x1 : wall.x2
+      const Top = (wall) => wall.y1 < wall.y2 ? wall.y1 : wall.y2
+      const Right = (wall) => wall.x1 > wall.x2 ? wall.x1 : wall.x2
+      const Bottom = (wall) => wall.y1 > wall.y2 ? wall.y1 : wall.y2
+
+      let wall, x, y
       if (!dw) {
-        const wall = this.walls[0]
-        group.left = wall.x1 + RL_AISLEGAP
-        group.top = wall.y1 - RL_ROOM_INNER_SPACING / 2
+        wall = this.walls[0]
+        x = Left(wall) + RL_AISLEGAP
+        y = Top(wall)
       } else {
-        const isHorizon = dw.angle % 180 === 0
-        group.left = dw.left, group.top = dw.top, group.angle = dw.angle
+        const od = dw.angle % 180 === 0 ? HORIZONTAL : VERTICAL
 
-        let wall = null, placeOnNextWall = false
+        let placeOnNextWall = false
+        wall = this.wallOfDW(dw)
 
-        if (isHorizon) {
-          wall = this.walls.find(w => Math.abs(w.top - group.top) === RL_ROOM_INNER_SPACING / 2)
-          group.left += (RL_AISLEGAP + dw.width)
-          if (group.left + group.width > wall.x2)
+        if (od === HORIZONTAL) {
+          x = dw.left + dw.width + RL_AISLEGAP
+          y = Top(wall)
+          if (x + group.width > Right(wall))
             placeOnNextWall = true
-        }
-        else {
-          wall = this.walls.find(w => Math.abs(w.left - group.left) === RL_ROOM_INNER_SPACING / 2)
-          group.top += RL_AISLEGAP + dw.height
-          if (group.top + group.height > wall.y2)
+        } else {
+          y = dw.top + dw.width + RL_AISLEGAP
+          x = Left(wall)
+          if (y + group.width > Bottom(wall))
             placeOnNextWall = true
         }
 
         if (placeOnNextWall) {
-          const nextWall = this.walls[(Number(wall.name.split(':')[1]) + 1) % this.walls.length]
-          group.angle += 90
-          if (!isHorizon)
-            group.left = nextWall.x1 + RL_AISLEGAP, group.top = nextWall.y1 - RL_ROOM_INNER_SPACING / 2
+          wall = this.walls[(Number(wall.name.split(':')[1]) + 1) % this.walls.length]
+          const nd = this.directionOfWall(wall)
+
+          if (nd === HORIZONTAL)
+            x = Left(wall) + RL_AISLEGAP, y = Top(wall)
           else
-            group.left = nextWall.x1 + RL_ROOM_INNER_SPACING / 2, group.top = nextWall.y1 + RL_AISLEGAP
+            x = Left(wall), y = Top(wall) + RL_AISLEGAP
         }
       }
 
-      group.selectable = false
+      this.locateDW(group, wall, x, y)
+
       group.hasBorders = false
       this.view.add(group)
 
@@ -510,7 +588,7 @@ export class ViewComponent implements OnInit, AfterViewInit {
       const lastTB = this.lastObjectDefinition.tbSpacing || RL_AISLEGAP;
 
       // calculate maximum gap required by last and this object
-      // Note: this isn't smart enough to get new row gap right when 
+      // Note: this isn't smart enough to get new row gap right when
       // object above had a much bigger gap, etc. We aren't fitting yet.
       const useLR = Math.max(newLR, lastLR), useTB = Math.max(newTB, lastTB);
 
@@ -740,6 +818,23 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
   filterObjects(names: string[]) {
     return this.view.getObjects().filter(obj => names.some(n => obj.name.indexOf(n) > -1))
+  }
+
+
+  wallOfDW(dw: fabric.Group | fabric.Object) {
+    const d = dw.angle % 180 === 0 ? HORIZONTAL : VERTICAL
+    return this.walls.find(w => Math.abs(d === HORIZONTAL ? w.top - dw.top : w.left - dw.left) === OFFSET)
+  }
+
+  directionOfWall(wall: fabric.Line) {
+    if (wall.x1 === wall.x2)
+      return VERTICAL
+    else
+      return HORIZONTAL
+  }
+
+  isDW(object) {
+    return object.name.indexOf('DOOR') > -1 || object.name.indexOf('WINDOW') > -1
   }
 
 }

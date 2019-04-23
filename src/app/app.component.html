@@ -206,11 +206,6 @@
               [disabled]="app.roomEditRedoStates.length === 0">
               <fa-icon [icon]="['fas', 'share']"></fa-icon>
             </button>
-            <mat-button-toggle-group [ngModel]="app.roomEditOperate"
-              (ngModelChange)="app.changeRoomEditOperate($event)">
-              <mat-button-toggle value="CORNER">Add Corner</mat-button-toggle>
-              <mat-button-toggle value="WALL">Move Wall</mat-button-toggle>
-            </mat-button-toggle-group>
             <button mat-button matTooltip="Switch Edition Mode" color="primary" *ngIf="app.roomEdit"
               (click)="app.endEditRoom()">End Room Edition</button>
           </ng-container>

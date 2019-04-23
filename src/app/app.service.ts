@@ -102,9 +102,4 @@ export class AppService {
   placeInCenter(direction) {
     this.performOperation.next(direction)
   }
-
-  changeRoomEditOperate(op) {
-    this.roomEditOperate = op
-    this.performOperation.next('ROOM_OPERATION')
-  }
 }

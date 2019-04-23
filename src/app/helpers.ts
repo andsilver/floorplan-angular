@@ -13,7 +13,7 @@ const
   RL_VIEW_HEIGHT = 60,
   RL_FOOT = 12,
   RL_AISLEGAP = 12 * 3,
-  RL_ROOM_OUTER_SPACING = 12,
+  RL_ROOM_OUTER_SPACING = 48,
   RL_ROOM_INNER_SPACING = 4,
   RL_ROOM_STROKE = '#000',
   RL_CORNER_FILL = '#88f',
@@ -210,12 +210,6 @@ const createBasicShape = (part: any, stroke: string = '#aaaaaa', fill: string = 
   if (part.definition.stroke == null) part.definition.stroke = stroke;
   else if (part.definition.stroke == 'chair') part.definition.stroke = RL_CHAIR_STROKE;
 
-  // lines and paths need origin set to center
-  // if (part.type === 'line' || part.type === 'path') {
-  // part.definition.originX = 'center';
-  // part.definition.originY = 'center';
-  // }
-
   let fObj
 
   switch (part.type) {
@@ -248,11 +242,24 @@ const createBasicShape = (part: any, stroke: string = '#aaaaaa', fill: string = 
   return (fObj)
 }
 
+
+const createFurniture = (type: string, object, chair = {}) => {
+  if (type === 'TABLE')
+      return createTable(object, chair)
+    else if (type === 'TEXT')
+      return createText(object)
+    else if (type === 'LAYOUT')
+      return object
+    else
+      return createShape(object, RL_STROKE, RL_FILL, type)
+}
+
 export {
   createBasicShape,
   createTable,
   createShape,
   createText,
+  createFurniture,
 
   RL_FILL,
   RL_STROKE,
