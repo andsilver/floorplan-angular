@@ -69,6 +69,10 @@ export class AppComponent implements OnInit {
     })
   }
 
+  download(format: string) {
+    this.app.performOperation.next(format)
+  }
+
   // get text() {
   //   return this.textForm.controls.text
   // }

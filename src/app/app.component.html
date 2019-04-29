@@ -153,6 +153,11 @@
           <button mat-raised-button color="primary" style="width: 100%" (click)="layoutChairs()">Layout chairs</button>
         </div>
       </mat-expansion-panel>
+
+      <div class="export-btns">
+        <button mat-raised-button color="primary" (click)="download('PNG')">Download as Image</button>
+        <button mat-raised-button color="primary" (click)="download('SVG')">Download as SVG</button>
+      </div>
     </mat-accordion>
   </mat-drawer>
 

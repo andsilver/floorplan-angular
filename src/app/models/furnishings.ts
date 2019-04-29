@@ -309,30 +309,30 @@ const FURNISHINGS =
       parts: [
         { type: 'rect', definition: { left: 0, width: 28, top: 0, height: 4, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
         { type: 'line', line: [0, 0, 0, 32], definition: { stroke: 'black', strokeWidth: 1 } },
-        { type: 'path', path: 'M 0 32 Q 28, 32, 28, 4', definition: { stroke: '#999', strokeWidth: 1, fill: 'transparent' } },
+        { type: 'path', path: 'M 0 32 Q 28, 32, 28, 4', definition: { stroke: '#ddd', strokeWidth: 1, fill: 'transparent' } },
       ]
     }, {
       title: 'Normal Door (32" wide)',
       parts: [
         { type: 'rect', definition: { left: 0, width: 32, top: 0, height: 4, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
         { type: 'line', line: [0, 0, 0, 36], definition: { stroke: 'black', strokeWidth: 1 } },
-        { type: 'path', path: 'M 0 36 Q 32, 36, 32, 4', definition: { stroke: '#999', strokeWidth: 1, fill: 'transparent' } },
+        { type: 'path', path: 'M 0 36 Q 32, 36, 32, 4', definition: { stroke: '#ddd', strokeWidth: 1, fill: 'transparent' } },
       ]
     }, {
       title: 'Wide Door (36" wide)',
       parts: [
         { type: 'rect', definition: { left: 0, width: 36, top: 0, height: 4, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
         { type: 'line', line: [0, 0, 0, 40], definition: { stroke: 'black', strokeWidth: 1 } },
-        { type: 'path', path: 'M 0 40 Q 36, 40, 36, 4', definition: { stroke: '#999', strokeWidth: 1, fill: 'transparent' } },
+        { type: 'path', path: 'M 0 40 Q 36, 40, 36, 4', definition: { stroke: '#ddd', strokeWidth: 1, fill: 'transparent' } },
       ]
     }, {
       title: 'Double Doors (64" wide)',
       parts: [
         { type: 'rect', definition: { left: 0, width: 64, top: 0, height: 4, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
         { type: 'line', line: [0, 0, 0, 36], definition: { stroke: 'black', strokeWidth: 1 } },
-        { type: 'path', path: 'M 0 36 Q 32, 36, 32, 4', definition: { stroke: '#999', strokeWidth: 1, fill: 'transparent' } },
+        { type: 'path', path: 'M 0 36 Q 32, 36, 32, 4', definition: { stroke: '#ddd', strokeWidth: 1, fill: 'transparent' } },
         { type: 'line', line: [64, 0, 64, 36], definition: { stroke: 'black', strokeWidth: 1 } },
-        { type: 'path', path: 'M 32 4 Q 32, 36, 64, 36', definition: { stroke: '#999', strokeWidth: 1, fill: 'transparent' } },
+        { type: 'path', path: 'M 32 4 Q 32, 36, 64, 36', definition: { stroke: '#ddd', strokeWidth: 1, fill: 'transparent' } },
       ]
     }
   ],

@@ -15,6 +15,7 @@ mat-drawer-container {
   .preview-item {
     padding: 8px;
     cursor: pointer;
+
     &:hover {
       background: white;
       box-shadow:
@@ -31,15 +32,17 @@ mat-drawer-container {
 }
 
 .status-bar {
-  border-top: 1px solid rgba(0,0,0,.12);
+  border-top: 1px solid rgba(0, 0, 0, .12);
   background: #ececec;
   min-height: 79px;
   width: 100%;
+
   .status-bar-item {
     td {
       padding: 10px;
-      border-bottom: 1px solid rgba(0,0,0,.12);
+      border-bottom: 1px solid rgba(0, 0, 0, .12);
     }
+
     span {
       margin-right: 15px;
     }
@@ -49,8 +52,20 @@ mat-drawer-container {
 .new-text {
   mat-radio-group {
     padding-left: 12px;
+
     mat-radio-button {
       margin-right: 16px;
+    }
+  }
+}
+
+.export-btns {
+  padding: 24px;
+
+  button {
+    width: 100%;
+    &:first-of-type {
+      margin-bottom: 24px;
     }
   }
 }

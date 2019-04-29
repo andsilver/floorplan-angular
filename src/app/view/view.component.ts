@@ -1,11 +1,12 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { fabric } from 'fabric';
+import { saveAs } from 'file-saver';
+import { formatDate } from '@angular/common';
+
 import { AppService } from '../app.service';
 import * as _ from '../helpers'
 
 const {
-  RL_FILL,
-  RL_STROKE,
   RL_VIEW_WIDTH,
   RL_VIEW_HEIGHT,
   RL_FOOT,
@@ -15,10 +16,8 @@ const {
   RL_ROOM_STROKE,
   RL_CORNER_FILL,
   RL_UNGROUPABLES,
-
-  createTable,
-  createText,
-  createShape
+  RL_CREDIT_TEXT,
+  RL_CREDIT_TEXT_PARAMS
 } = _
 
 const { Line, Circle, Point } = fabric
@@ -26,6 +25,11 @@ const
   HORIZONTAL = 'HORIZONTAL',
   VERTICAL = 'VERTICAL',
   OFFSET = RL_ROOM_INNER_SPACING / 2
+
+const Left = (wall) => wall.x1 < wall.x2 ? wall.x1 : wall.x2
+const Top = (wall) => wall.y1 < wall.y2 ? wall.y1 : wall.y2
+const Right = (wall) => wall.x1 > wall.x2 ? wall.x1 : wall.x2
+const Bottom = (wall) => wall.y1 > wall.y2 ? wall.y1 : wall.y2
 
 
 @Component({
@@ -73,28 +77,58 @@ export class ViewComponent implements OnInit, AfterViewInit {
     this.app.defaultChair.subscribe(res => this.DEFAULT_CHAIR = res)
 
     this.app.performOperation.subscribe(operation => {
-      if (operation === 'UNDO')
-        this.undo()
-      else if (operation === 'REDO')
-        this.redo()
-      else if (operation === 'COPY')
-        this.copy()
-      else if (operation === 'PASTE')
-        this.paste()
-      else if (operation === 'DELETE')
-        this.delete()
-      else if (operation === 'ROTATE')
-        this.rotate()
-      else if (operation === 'ROTATE_ANTI')
-        this.rotate(false)
-      else if (operation === 'GROUP')
-        this.group()
-      else if (operation === 'UNGROUP')
-        this.ungroup()
-      else if (operation === 'HORIZONTAL' || operation === 'VERTICAL')
-        this.placeInCenter(operation)
-      else if (operation === 'ROOM_OPERATION')
-        this.drawRoom()
+      switch (operation) {
+
+        case 'UNDO':
+          this.undo()
+          break
+
+        case 'REDO':
+          this.redo()
+          break
+
+        case 'COPY':
+          this.copy()
+          break
+
+        case 'PASTE':
+          this.paste()
+          break
+
+        case 'DELETE':
+          this.delete()
+          break
+
+        case 'ROTATE':
+          this.rotate()
+          break
+
+        case 'ROTATE_ANTI':
+          this.rotate(false)
+          break
+
+        case 'GROUP':
+          this.group()
+          break
+
+        case 'UNGROUP':
+          this.ungroup()
+          break
+
+        case 'HORIZONTAL':
+        case 'VERTICAL':
+          this.placeInCenter(operation)
+          break
+
+        case 'ROOM_OPERATION':
+          this.drawRoom()
+          break
+
+        case 'PNG':
+        case 'SVG':
+          this.saveAs(operation)
+          break
+      }
     })
   }
 
@@ -278,8 +312,6 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
       if (obj && this.isDW(obj) && obj instanceof fabric.Group) {
         let wall, distance = 999
-        const Left = (wall) => wall.x1 < wall.x2 ? wall.x1 : wall.x2
-        const Top = (wall) => wall.y1 < wall.y2 ? wall.y1 : wall.y2
         const dist2 = (v, w) => (v.x - w.x) * (v.x - w.x) + (v.y - w.y) * (v.y - w.y)
         const distToSegmentSquared = (p, v, w) => {
           var l2 = dist2(v, w);
@@ -525,10 +557,6 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
       const dws = this.filterObjects(['DOOR', 'WINDOW'])
       const dw = dws.length ? dws[dws.length - 1] : null
-      const Left = (wall) => wall.x1 < wall.x2 ? wall.x1 : wall.x2
-      const Top = (wall) => wall.y1 < wall.y2 ? wall.y1 : wall.y2
-      const Right = (wall) => wall.x1 > wall.x2 ? wall.x1 : wall.x2
-      const Bottom = (wall) => wall.y1 > wall.y2 ? wall.y1 : wall.y2
 
       let wall, x, y
       if (!dw) {
@@ -734,7 +762,10 @@ export class ViewComponent implements OnInit, AfterViewInit {
       obj.top += obj.height / 2
     }
 
-    angle = obj.angle + (clockwise ? angle : -angle)
+    if (this.isDW(obj))
+      angle = obj.angle + (clockwise ? 180 : -180)
+    else
+      angle = obj.angle + (clockwise ? angle : -angle)
 
     if (angle > 360) angle -= 360
     else if (angle < 0) angle += 360
@@ -835,6 +866,65 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
   isDW(object) {
     return object.name.indexOf('DOOR') > -1 || object.name.indexOf('WINDOW') > -1
+  }
+
+  getBoundingRectOfAll() {
+    let top = 9999, left = 9999, right = 0, bottom = 0
+    this.corners.forEach(obj => {
+      if (obj.left < top)
+        top = obj.top
+      if (obj.left < left)
+        left = obj.left
+      if (obj.top > bottom)
+        bottom = obj.top
+      if (obj.left > right)
+        right = obj.left
+    })
+
+    return { left, top, right, bottom }
+  }
+
+  saveAs(format: string) {
+
+    const { right, bottom } = this.getBoundingRectOfAll()
+    const width = this.view.getWidth()
+    const height = this.view.getHeight()
+
+    this.view.setWidth(right + RL_ROOM_OUTER_SPACING)
+    this.view.setHeight(bottom + RL_ROOM_OUTER_SPACING + 12)
+    this.view.setBackgroundColor('white', () => { })
+
+    const credit = new fabric.Text(RL_CREDIT_TEXT,
+      {
+        ...RL_CREDIT_TEXT_PARAMS,
+        left: RL_ROOM_OUTER_SPACING,
+        top: bottom + RL_ROOM_OUTER_SPACING - RL_CREDIT_TEXT_PARAMS.fontSize
+      }
+    )
+    this.view.add(credit)
+    this.view.discardActiveObject()
+    this.view.renderAll()
+
+    const restore = () => {
+      this.view.remove(credit)
+      this.view.setBackgroundColor('transparent', () => { })
+      this.view.setWidth(width)
+      this.view.setHeight(height)
+      this.view.renderAll()
+    }
+
+    if (format === 'PNG') {
+      const canvas: any = document.getElementById('main')
+      canvas.toBlob((blob: Blob) => {
+        saveAs(blob, `room_layout_${formatDate(new Date(), 'yyyy-MM-dd-hh-mm-ss', 'en')}.png`)
+        restore()
+      })
+    } else if (format === 'SVG') {
+      const svg = this.view.toSVG()
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+      saveAs(blob, `room_layout_${formatDate(new Date(), 'yyyy-MM-dd-hh-mm-ss', 'en')}.svg`)
+      restore()
+    }
   }
 
 }
