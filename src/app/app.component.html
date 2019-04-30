@@ -217,16 +217,17 @@
         </div>
         <mat-menu #arrange="matMenu">
           <ng-template matMenuContent>
-            <button mat-menu-item [disabled]="app.selections.length < 2">Arrange Left</button>
-            <button mat-menu-item [disabled]="app.selections.length < 2">Arrange Center</button>
-            <button mat-menu-item [disabled]="app.selections.length < 2">Arrange Right</button>
-            <button mat-menu-item [disabled]="app.selections.length < 2">Arrange Top</button>
-            <button mat-menu-item [disabled]="app.selections.length < 2">Arrange Middle</button>
-            <button mat-menu-item [disabled]="app.selections.length < 2">Arrange Bottom</button>
+            <button mat-menu-item (click)="app.arrange('LEFT')" [disabled]="app.selections.length < 2">Arrange Left</button>
+            <button mat-menu-item (click)="app.arrange('CENTER')" [disabled]="app.selections.length < 2">Arrange Center</button>
+            <button mat-menu-item (click)="app.arrange('RIGHT')" [disabled]="app.selections.length < 2">Arrange Right</button>
+            <button mat-menu-item (click)="app.arrange('TOP')" [disabled]="app.selections.length < 2">Arrange Top</button>
+            <button mat-menu-item (click)="app.arrange('MIDDLE')" [disabled]="app.selections.length < 2">Arrange Middle</button>
+            <button mat-menu-item (click)="app.arrange('BOTTOM')" [disabled]="app.selections.length < 2">Arrange Bottom</button>
             <button mat-menu-item (click)="app.placeInCenter('HORIZONTAL')">Center Horizontally</button>
             <button mat-menu-item (click)="app.placeInCenter('VERTICAL')">Center Vertically</button>
           </ng-template>
         </mat-menu>
+        <app-zoom (zoomChange)="onZoom($event)" [zoom]="app.zoom"></app-zoom>
       </mat-toolbar-row>
     </mat-toolbar>
     <app-view></app-view>

@@ -1,0 +1,9 @@
+<div fxLayout fxLayoutAlign="center center" class="zoom-widget">
+  <button mat-icon-button matTooltip="Zoom Out" (click)="zoomOut()">
+    <fa-icon [icon]="['fas', 'minus']"></fa-icon>
+  </button>
+  <span style="padding: 0 10px; font-size: 16px">{{ zoom }}%</span>
+  <button mat-icon-button matTooltip="Zoom In" (click)="zoomIn()">
+    <fa-icon [icon]="['fas', 'plus']"></fa-icon>
+  </button>
+</div>

@@ -25,6 +25,7 @@ export class AppService {
   performOperation: Subject<any> = new Subject<any>()
   roomEdition: Subject<boolean> = new Subject<boolean>()
   saveState = new Subject<any>()
+  zoom = 100
 
   constructor() {
     this.saveState.subscribe(res => {
@@ -101,5 +102,23 @@ export class AppService {
 
   placeInCenter(direction) {
     this.performOperation.next(direction)
+  }
+
+  arrange(side) {
+    this.performOperation.next(side)
+  }
+
+  zoomIn() {
+    if (this.zoom >= 150)
+      return
+    this.zoom += 10
+    this.performOperation.next('ZOOM')
+  }
+
+  zoomOut() {
+    if (this.zoom <= 20)
+      return
+    this.zoom -= 10
+    this.performOperation.next('ZOOM')
   }
 }

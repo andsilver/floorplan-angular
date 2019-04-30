@@ -1,3 +1,5 @@
+import { RL_ROOM_INNER_SPACING as WT } from '../helpers' // WT = Wall Thickness
+
 const FURNISHINGS =
 {
   "title": "Faithlife Room Layout Furniture Library",
@@ -307,32 +309,32 @@ const FURNISHINGS =
     {
       title: 'Narrow Door (28" wide)',
       parts: [
-        { type: 'rect', definition: { left: 0, width: 28, top: 0, height: 4, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
-        { type: 'line', line: [0, 0, 0, 32], definition: { stroke: 'black', strokeWidth: 1 } },
-        { type: 'path', path: 'M 0 32 Q 28, 32, 28, 4', definition: { stroke: '#ddd', strokeWidth: 1, fill: 'transparent' } },
+        { type: 'rect', definition: { left: 0, width: 28, top: 0, height: WT, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
+        { type: 'line', line: [0, 0, 0, `${WT + 28}`], definition: { stroke: 'black', strokeWidth: 1 } },
+        { type: 'path', path: `M 0 ${WT + 28} Q 28, ${WT + 28}, 28, ${WT}`, definition: { stroke: '#ddd', strokeWidth: 1, fill: 'transparent' } },
       ]
     }, {
       title: 'Normal Door (32" wide)',
       parts: [
-        { type: 'rect', definition: { left: 0, width: 32, top: 0, height: 4, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
-        { type: 'line', line: [0, 0, 0, 36], definition: { stroke: 'black', strokeWidth: 1 } },
-        { type: 'path', path: 'M 0 36 Q 32, 36, 32, 4', definition: { stroke: '#ddd', strokeWidth: 1, fill: 'transparent' } },
+        { type: 'rect', definition: { left: 0, width: 32, top: 0, height: WT, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
+        { type: 'line', line: [0, 0, 0, `${WT + 32}`], definition: { stroke: 'black', strokeWidth: 1 } },
+        { type: 'path', path: `M 0 ${WT + 32} Q 32, ${WT + 32}, 32, ${WT}`, definition: { stroke: '#ddd', strokeWidth: 1, fill: 'transparent' } },
       ]
     }, {
       title: 'Wide Door (36" wide)',
       parts: [
-        { type: 'rect', definition: { left: 0, width: 36, top: 0, height: 4, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
-        { type: 'line', line: [0, 0, 0, 40], definition: { stroke: 'black', strokeWidth: 1 } },
-        { type: 'path', path: 'M 0 40 Q 36, 40, 36, 4', definition: { stroke: '#ddd', strokeWidth: 1, fill: 'transparent' } },
+        { type: 'rect', definition: { left: 0, width: 36, top: 0, height: WT, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
+        { type: 'line', line: [0, 0, 0, `${WT + 36}`], definition: { stroke: 'black', strokeWidth: 1 } },
+        { type: 'path', path: `M 0 ${WT + 36} Q 36, ${WT + 36}, 36, ${WT}`, definition: { stroke: '#ddd', strokeWidth: 1, fill: 'transparent' } },
       ]
     }, {
       title: 'Double Doors (64" wide)',
       parts: [
-        { type: 'rect', definition: { left: 0, width: 64, top: 0, height: 4, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
-        { type: 'line', line: [0, 0, 0, 36], definition: { stroke: 'black', strokeWidth: 1 } },
-        { type: 'path', path: 'M 0 36 Q 32, 36, 32, 4', definition: { stroke: '#ddd', strokeWidth: 1, fill: 'transparent' } },
-        { type: 'line', line: [64, 0, 64, 36], definition: { stroke: 'black', strokeWidth: 1 } },
-        { type: 'path', path: 'M 32 4 Q 32, 36, 64, 36', definition: { stroke: '#ddd', strokeWidth: 1, fill: 'transparent' } },
+        { type: 'rect', definition: { left: 0, width: 64, top: 0, height: WT, fill: 'white', strokeWidth: 0, originX: 'left', originY: 'top' } },
+        { type: 'line', line: [0, 0, 0, `${WT + 32}`], definition: { stroke: 'black', strokeWidth: 1 } },
+        { type: 'path', path: `M 0 ${WT + 32} Q 32, ${WT + 32}, 32, ${WT}`, definition: { stroke: '#ddd', strokeWidth: 1, fill: 'transparent' } },
+        { type: 'line', line: [64, 0, 64, `${WT + 32}`], definition: { stroke: 'black', strokeWidth: 1 } },
+        { type: 'path', path: `M 32 ${WT} Q 32, ${WT + 32}, 64, ${WT + 32}`, definition: { stroke: '#ddd', strokeWidth: 1, fill: 'transparent' } },
       ]
     }
   ],
@@ -340,25 +342,25 @@ const FURNISHINGS =
     {
       title: '2’ Window (24” wide)',
       parts: [
-        { type: 'rect', definition: { left: 0, width: 24, top: 0, height: 3, fill: 'white', strokeWidth: 1, originX: 'left', originY: 'top' } },
+        { type: 'rect', definition: { left: 0, width: 24, top: 0, height: WT - 1, fill: 'white', strokeWidth: 1, originX: 'left', originY: 'top' } },
       ]
     },
     {
       title: '3’ Window (36” wide)',
       parts: [
-        { type: 'rect', definition: { left: 0, width: 36, top: 0, height: 3, fill: 'white', strokeWidth: 1, originX: 'left', originY: 'top' } },
+        { type: 'rect', definition: { left: 0, width: 36, top: 0, height: WT - 1, fill: 'white', strokeWidth: 1, originX: 'left', originY: 'top' } },
       ]
     },
     {
       title: '4’ Window (48” wide)',
       parts: [
-        { type: 'rect', definition: { left: 0, width: 48, top: 0, height: 3, fill: 'white', strokeWidth: 1, originX: 'left', originY: 'top' } },
+        { type: 'rect', definition: { left: 0, width: 48, top: 0, height: WT - 1, fill: 'white', strokeWidth: 1, originX: 'left', originY: 'top' } },
       ]
     },
     {
       title: '6’ Window (72” wide)',
       parts: [
-        { type: 'rect', definition: { left: 0, width: 72, top: 0, height: 3, fill: 'white', strokeWidth: 1, originX: 'left', originY: 'top' } },
+        { type: 'rect', definition: { left: 0, width: 72, top: 0, height: WT - 1, fill: 'white', strokeWidth: 1, originX: 'left', originY: 'top' } },
       ]
     }
   ]

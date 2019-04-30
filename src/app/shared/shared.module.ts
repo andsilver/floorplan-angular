@@ -22,6 +22,7 @@ import {
 } from '@fortawesome/angular-fontawesome'
 
 import { FlexLayoutModule } from '@angular/flex-layout';
+import { ZoomComponent } from './zoom/zoom.component';
 
 @NgModule({
   imports: [
@@ -59,8 +60,11 @@ import { FlexLayoutModule } from '@angular/flex-layout';
     MatSidenavModule,
     MatToolbarModule,
     MatTooltipModule,
-    FlexLayoutModule
+    FlexLayoutModule,
+
+    ZoomComponent
   ],
-  providers: []
+  providers: [],
+  declarations: [ZoomComponent]
 })
 export class SharedModule { }

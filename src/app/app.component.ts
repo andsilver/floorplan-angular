@@ -2,13 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faReply, faShare, faClone, faTrash, faUndo, faRedo, faObjectGroup, faObjectUngroup } from '@fortawesome/free-solid-svg-icons';
+import { faReply, faShare, faClone, faTrash, faUndo, faRedo, faObjectGroup, faObjectUngroup, faPlus, faMinus } from '@fortawesome/free-solid-svg-icons';
 
 import { FURNISHINGS } from './models/furnishings';
 import { AppService } from './app.service';
 import { ChairsLayoutComponent } from './chairs-layout/chairs-layout.component'
 
-library.add( faReply, faShare, faClone, faTrash, faUndo, faRedo, faObjectGroup, faObjectUngroup )
+library.add( faReply, faShare, faClone, faTrash, faUndo, faRedo, faObjectGroup, faObjectUngroup, faMinus, faPlus )
 
 @Component({
   selector: 'app-root',
@@ -71,6 +71,11 @@ export class AppComponent implements OnInit {
 
   download(format: string) {
     this.app.performOperation.next(format)
+  }
+
+  onZoom(value) {
+    this.app.zoom = value
+    this.app.performOperation.next('ZOOM')
   }
 
   // get text() {

@@ -1,6 +1,13 @@
 .layout-chairs {
   // min-width: 700px;
 
+  .layout-type {
+    padding: 24px 0;
+    mat-radio-button {
+      margin-right: 24px;
+    }
+  }
+
   label {
     display: block;
     margin-bottom: 5px;
@@ -25,5 +32,9 @@
   canvas {
     border: 1px solid #ececec;
     border-radius: 3px;
+  }
+
+  p {
+    margin-bottom: 0;
   }
 }

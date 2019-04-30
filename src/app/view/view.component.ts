@@ -20,7 +20,7 @@ const {
   RL_CREDIT_TEXT_PARAMS
 } = _
 
-const { Line, Circle, Point } = fabric
+const { Line, Point } = fabric
 const
   HORIZONTAL = 'HORIZONTAL',
   VERTICAL = 'VERTICAL',
@@ -128,6 +128,19 @@ export class ViewComponent implements OnInit, AfterViewInit {
         case 'SVG':
           this.saveAs(operation)
           break
+
+        case 'ZOOM':
+          this.setZoom()
+          break
+
+        case 'LEFT':
+        case 'CENTER':
+        case 'RIGHT':
+        case 'TOP':
+        case 'MIDDLE':
+        case 'BOTTOM':
+          this.arrange(operation)
+          break
       }
     })
   }
@@ -188,6 +201,9 @@ export class ViewComponent implements OnInit, AfterViewInit {
       this.CTRL_KEY_DOWN = false
     }
   }
+
+
+  onScroll(event) {}
 
 
   setGroupableState() {
@@ -403,12 +419,12 @@ export class ViewComponent implements OnInit, AfterViewInit {
    * set corner according to current edition status
    * -------------------------------------------------------------------------------------------------------
    */
-  setCornerStyle(c: fabric.Circle) {
+  setCornerStyle(c: fabric.Rect) {
     c.moveCursor = this.view.freeDrawingCursor
     c.hoverCursor = this.view.freeDrawingCursor
     c.selectable = false
     c.evented = false
-    c.set('radius', RL_ROOM_INNER_SPACING / (this.app.roomEdit ? 1 : 2))
+    c.width = c.height = (RL_ROOM_INNER_SPACING / (this.app.roomEdit ? 1.5 : 2)) * 2
     c.set('fill', this.app.roomEdit ? RL_CORNER_FILL : RL_ROOM_STROKE)
   }
 
@@ -419,7 +435,7 @@ export class ViewComponent implements OnInit, AfterViewInit {
    * -------------------------------------------------------------------------------------------------------
    */
   drawCorner(p: fabric.Point) {
-    const c = new Circle({
+    const c = new fabric.Rect({
       left: p.x,
       top: p.y,
       strokeWidth: 0,
@@ -454,7 +470,8 @@ export class ViewComponent implements OnInit, AfterViewInit {
       hasControls: false,
       hasBorders: false,
       selectable: this.app.roomEdit,
-      evented: this.app.roomEdit
+      evented: this.app.roomEdit,
+      cornerStyle: 'rect'
     })
 
     let LT = new Point(9999, 9999), RB = new Point(0, 0)
@@ -504,24 +521,16 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
 
 
-  /**********************************************************************************************************
-   * check an object is related room edition
-   * -------------------------------------------------------------------------------------------------------
-   */
-  isRoomObject(object: any) {
-    const names = ['WALL', 'CORNER']
-    return names.some(n => object.name.indexOf(n) > -1)
-  }
+  /**********************************************************************************************************/
 
   editRoom() {
     this.view.getObjects().forEach(r => {
-      if (!this.isRoomObject(r)) {
-        r.selectable = false
-        r.evented = false
-        r.opacity = 0.3
-      } else {
+      if (r.name.indexOf('WALL') !== -1) {
         r.selectable = true
         r.evented = true
+      } else {
+        r.selectable = false
+        r.evented = false
       }
     })
     if (this.app.roomEditStates.length === 0)
@@ -530,13 +539,12 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
   cancelRoomEdition() {
     this.view.getObjects().forEach(r => {
-      if (!this.isRoomObject(r)) {
-        r.selectable = true
-        r.evented = true
-        r.opacity = 1
-      } else {
+      if (r.name.indexOf('WALL') !== -1 || r.name.indexOf('CORNER') !== -1) {
         r.selectable = false
         r.evented = false
+      } else {
+        r.selectable = true
+        r.evented = true
       }
     })
   }
@@ -830,6 +838,11 @@ export class ViewComponent implements OnInit, AfterViewInit {
     this.saveState()
   }
 
+  setZoom() {
+    this.view.setZoom(this.app.zoom / 100)
+    this.view.renderAll()
+  }
+
   placeInCenter(direction) {
     const active = this.view.getActiveObject()
 
@@ -844,6 +857,19 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
     active.setCoords()
     this.view.requestRenderAll()
+    this.saveState()
+  }
+
+  arrange(action: string) {
+    const rect = this.getBoundingRect(this.app.selections)
+    action = action.toLowerCase()
+    this.app.selections.forEach(s => {
+      if (action === 'left' || action === 'right' || action === 'center')
+        s.left = rect[action]
+      else
+        s.top = rect[action]
+    })
+    this.view.renderAll()
     this.saveState()
   }
 
@@ -868,9 +894,9 @@ export class ViewComponent implements OnInit, AfterViewInit {
     return object.name.indexOf('DOOR') > -1 || object.name.indexOf('WINDOW') > -1
   }
 
-  getBoundingRectOfAll() {
+  getBoundingRect(objects: any[]) {
     let top = 9999, left = 9999, right = 0, bottom = 0
-    this.corners.forEach(obj => {
+    objects.forEach(obj => {
       if (obj.left < top)
         top = obj.top
       if (obj.left < left)
@@ -881,12 +907,15 @@ export class ViewComponent implements OnInit, AfterViewInit {
         right = obj.left
     })
 
-    return { left, top, right, bottom }
+    const center = (left + right) / 2
+    const middle = (top + bottom) / 2
+
+    return { left, top, right, bottom, center, middle }
   }
 
   saveAs(format: string) {
 
-    const { right, bottom } = this.getBoundingRectOfAll()
+    const { right, bottom } = this.getBoundingRect(this.corners)
     const width = this.view.getWidth()
     const height = this.view.getHeight()
 
