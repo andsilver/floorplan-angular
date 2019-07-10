@@ -152,6 +152,7 @@ export class ChairsLayoutComponent implements OnInit {
 
   create() {
     this.layout.selectable = true
+    this.layout.scale(1)
     this.dialogRef.close(this.layout)
   }
 
