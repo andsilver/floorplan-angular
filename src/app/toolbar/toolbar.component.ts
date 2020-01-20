@@ -76,7 +76,7 @@ library.add( faReply, faShare, faClone, faTrash, faUndo, faRedo, faObjectGroup, 
             <button mat-menu-item (click)="appService.placeInCenter('VERTICAL')">Center Vertically</button>
           </ng-template>
         </mat-menu>
-        <!-- <app-zoom (zoomChange)="onZoom($event)" [zoom]="appService.zoom"></app-zoom> -->
+        <app-zoom (zoomChange)="onZoom($event)" [zoom]="appService.zoom"></app-zoom>
       </mat-toolbar-row>
     </mat-toolbar>
   `,

@@ -19,7 +19,7 @@ const WIDTH = 1100, HEIGHT = 400;
         <mat-radio-button value="NORMAL">Normal</mat-radio-button>
         <mat-radio-button value="CURVED">Curved</mat-radio-button>
       </mat-radio-group>
-      <!-- <app-zoom (zoomChange)="onZoom($event)" [zoom]="zoom"></app-zoom> -->
+      <app-zoom (zoomChange)="onZoom($event)" [zoom]="zoom"></app-zoom>
     </div>
     <form *ngIf="layoutOption === 'CURVED'" [formGroup]="curvedBlock" fxLayout="column">
       <div>
