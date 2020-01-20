@@ -1,18 +1,18 @@
-<mat-toolbar color="primary">
-  <mat-toolbar-row>
-    <!-- <button mat-icon-button (click)="drawer.toggle()"><mat-icon>menu</mat-icon></button> -->
-    <h1>Room Layout</h1>
-  </mat-toolbar-row>
-</mat-toolbar>
+import { Component, OnInit } from '@angular/core';
+import { FormGroup, FormControl } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
+import { FURNISHINGS } from '../shared/models/furnishings';
+import { AppService } from '../app.service';
+import { ChairsLayoutComponent } from './chairs-layout.component';
 
-<mat-drawer-container hasBackdrop="false">
+@Component({
+  selector: 'app-items',
+  template: `
   <mat-drawer #drawer mode="side" opened>
     <mat-accordion class="rl-object-options">
       <mat-expansion-panel>
         <mat-expansion-panel-header>
-          <mat-panel-title>
-            Rooms
-          </mat-panel-title>
+          <mat-panel-title>Rooms</mat-panel-title>
         </mat-expansion-panel-header>
         <mat-list>
           <mat-divider></mat-divider>
@@ -25,7 +25,7 @@
         </mat-list>
       </mat-expansion-panel>
 
-      <mat-expansion-panel>
+      <mat-expansion-panel >
         <mat-expansion-panel-header>
           <mat-panel-title>
             Doors
@@ -160,104 +160,96 @@
       </div>
     </mat-accordion>
   </mat-drawer>
+  `,
+  styles: [`
 
-  <mat-drawer-content>
-    <mat-toolbar>
-      <mat-toolbar-row>
-        <div *ngIf="init">
-          <ng-container *ngIf="!app.roomEdit">
-            <button mat-icon-button matTooltip="Undo (Ctrl + Z)" (click)="app.undo()"
-              [disabled]="app.states.length === 1">
-              <fa-icon [icon]="['fas', 'reply']"></fa-icon>
-            </button>
-            <button mat-icon-button matTooltip="Redo (Ctrl + Shift + Z)" (click)="app.redo()"
-              [disabled]="app.redoStates.length === 0">
-              <fa-icon [icon]="['fas', 'share']"></fa-icon>
-            </button>
-            <button mat-icon-button matTooltip="Clone (Ctrl + D)" [disabled]="app.selections.length === 0"
-              (click)="app.clone()">
-              <fa-icon [icon]="['fas', 'clone']"></fa-icon>
-            </button>
-            <button mat-icon-button matTooltip="Delete (Delete)" [disabled]="app.selections.length === 0"
-              (click)="app.delete()">
-              <fa-icon [icon]="['fas', 'trash']"></fa-icon>
-            </button>
-            <button mat-icon-button matTooltip="Rotate Anti-Clockwise (Ctrl + Left Arrow)"
-              [disabled]="app.selections.length === 0" (click)="app.rotateAntiClockWise()">
-              <fa-icon [icon]="['fas', 'undo']"></fa-icon>
-            </button>
-            <button mat-icon-button matTooltip="Rotate Clockwise (Ctrl + Right Arrow)"
-              [disabled]="app.selections.length === 0" (click)="app.rotateClockWise()">
-              <fa-icon [icon]="['fas', 'redo']"></fa-icon>
-            </button>
-            <button mat-icon-button matTooltip="Group (Ctrl + G)" [disabled]="app.selections.length < 2"
-              (click)="app.group()">
-              <fa-icon [icon]="['fas', 'object-group']"></fa-icon>
-            </button>
-            <button mat-icon-button matTooltip="Ungroup (Ctrl + E)" [disabled]="!app.ungroupable"
-              (click)="app.ungroup()">
-              <fa-icon [icon]="['fas', 'object-ungroup']"></fa-icon>
-            </button>
-            <button mat-button matTooltip="Arrange" [matMenuTriggerFor]="arrange">Arrange</button>
-            <button mat-raised-button matTooltip="Switch Edition Mode" color="primary" (click)="app.editRoom()">Edit
-              Room</button>
-          </ng-container>
-          <ng-container *ngIf="app.roomEdit">
-            <button mat-icon-button matTooltip="Undo (Ctrl + Z)" (click)="app.undo()"
-              [disabled]="app.roomEditStates.length === 1">
-              <fa-icon [icon]="['fas', 'reply']"></fa-icon>
-            </button>
-            <button mat-icon-button matTooltip="Redo (Ctrl + Shift + Z)" (click)="app.redo()"
-              [disabled]="app.roomEditRedoStates.length === 0">
-              <fa-icon [icon]="['fas', 'share']"></fa-icon>
-            </button>
-            <button mat-button matTooltip="Switch Edition Mode" color="primary" *ngIf="app.roomEdit"
-              (click)="app.endEditRoom()">End Room Edition</button>
-          </ng-container>
-        </div>
-        <mat-menu #arrange="matMenu">
-          <ng-template matMenuContent>
-            <button mat-menu-item (click)="app.arrange('LEFT')" [disabled]="app.selections.length < 2">Arrange Left</button>
-            <button mat-menu-item (click)="app.arrange('CENTER')" [disabled]="app.selections.length < 2">Arrange Center</button>
-            <button mat-menu-item (click)="app.arrange('RIGHT')" [disabled]="app.selections.length < 2">Arrange Right</button>
-            <button mat-menu-item (click)="app.arrange('TOP')" [disabled]="app.selections.length < 2">Arrange Top</button>
-            <button mat-menu-item (click)="app.arrange('MIDDLE')" [disabled]="app.selections.length < 2">Arrange Middle</button>
-            <button mat-menu-item (click)="app.arrange('BOTTOM')" [disabled]="app.selections.length < 2">Arrange Bottom</button>
-            <button mat-menu-item (click)="app.placeInCenter('HORIZONTAL')">Center Horizontally</button>
-            <button mat-menu-item (click)="app.placeInCenter('VERTICAL')">Center Vertically</button>
-          </ng-template>
-        </mat-menu>
-        <app-zoom (zoomChange)="onZoom($event)" [zoom]="app.zoom"></app-zoom>
-      </mat-toolbar-row>
-    </mat-toolbar>
-    <app-view></app-view>
-    <table class="status-bar">
-      <tbody>
-        <tr class="status-bar-item">
-          <td>Type</td>
-          <td>Name</td>
-          <td>Left</td>
-          <td>Top</td>
-          <td>Rotation</td>
-          <td>Width</td>
-          <td>Height</td>
-          <td></td>
-        </tr>
-        <tr class="status-bar-item" *ngFor="let selected of app.selections">
-          <td><strong *ngIf="selected.name">{{selected.name.split(':')[0] | titlecase}}</strong></td>
-          <td><strong *ngIf="selected.name">{{selected.name.split(':')[1]}}</strong></td>
-          <td><strong>{{selected.left}}</strong></td>
-          <td><strong>{{selected.top}}</strong></td>
-          <td><strong>{{selected.angle}}'</strong></td>
-          <td><strong>{{selected.width}}</strong></td>
-          <td><strong>{{selected.height}}</strong></td>
-          <td>
-            <strong *ngIf="selected.name.split(':')[0] == 'TABLE'">
-              {{selected._objects.length - 1}} Chairs
-            </strong>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </mat-drawer-content>
-</mat-drawer-container>
+.preview-layout {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 8px;
+
+    .preview-item {padding: 8px;cursor: pointer;
+      &:hover {
+        background: white;
+        box-shadow:
+          0 3px 1px -2px rgba(0, 0, 0, .2),
+          0 2px 2px 0 rgba(0, 0, 0, .14),
+          0 1px 5px 0 rgba(0, 0, 0, .12);
+      }
+    }
+    .preview-title {margin-top: 8px;text-align: center}
+  }
+  .export-btns {
+    padding: 24px;
+    button {width: 100%;
+      &:first-of-type {margin-bottom: 24px;}
+    }
+  }
+  .new-text {
+    mat-radio-group {padding-left: 12px;
+      mat-radio-button {margin-right: 16px;}
+    }
+  }
+  `]
+})
+export class ItemsComponent implements OnInit {
+  title = 'room-layout';
+
+  init = false;
+  furnishings = FURNISHINGS;
+  defaultChairIndex = 0;
+
+  textForm: FormGroup;
+
+  previewItem = null;
+  previewType = null;
+
+  constructor (public appService: AppService, private dialog: MatDialog) {}
+
+  ngOnInit() {
+    const defaultChair = FURNISHINGS.chairs[0];
+    setTimeout(() => {
+      this.appService.defaultChair.next(defaultChair);
+      this.init = true;
+    }, 100);
+    this.initTextForm();
+  }
+
+  insert(object: any, type: string) {
+    if (this.appService.roomEdit) { return; }
+    this.appService.insertObject.next({type, object});
+  }
+
+  defaultChairChanged(index: number) {
+    this.defaultChairIndex = index;
+    this.appService.defaultChair.next(FURNISHINGS.chairs[index]);
+  }
+
+  initTextForm() {
+    this.textForm = new FormGroup({
+      text: new FormControl('New Text'),
+      font_size: new FormControl(16),
+      direction: new FormControl('HORIZONTAL')
+    });
+  }
+
+  insertNewText() {
+    this.insert({...this.textForm.value, name: 'TEXT:Text'}, 'TEXT');
+  }
+
+  layoutChairs() {
+    const ref = this.dialog.open(ChairsLayoutComponent);
+    ref.afterClosed().subscribe(res => {
+      if (!res) {
+        return;
+      }
+      this.insert(res, 'LAYOUT');
+    });
+  }
+
+  download(format: string) {
+    this.appService.performOperation.next(format);
+  }
+
+}

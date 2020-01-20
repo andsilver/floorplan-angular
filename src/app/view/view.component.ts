@@ -4,7 +4,7 @@ import { saveAs } from 'file-saver';
 import { formatDate } from '@angular/common';
 
 import { AppService } from '../app.service';
-import * as _ from '../helpers'
+import * as _ from '../shared/helpers';
 
 const {
   RL_VIEW_WIDTH,
@@ -18,44 +18,45 @@ const {
   RL_UNGROUPABLES,
   RL_CREDIT_TEXT,
   RL_CREDIT_TEXT_PARAMS
-} = _
+} = _;
 
-const { Line, Point } = fabric
-const
-  HORIZONTAL = 'HORIZONTAL',
-  VERTICAL = 'VERTICAL',
-  OFFSET = RL_ROOM_INNER_SPACING / 2
+const { Line, Point } = fabric;
+const HORIZONTAL = 'HORIZONTAL';
+const VERTICAL = 'VERTICAL';
+const OFFSET = RL_ROOM_INNER_SPACING / 2;
 
-const Left = (wall) => wall.x1 < wall.x2 ? wall.x1 : wall.x2
-const Top = (wall) => wall.y1 < wall.y2 ? wall.y1 : wall.y2
-const Right = (wall) => wall.x1 > wall.x2 ? wall.x1 : wall.x2
-const Bottom = (wall) => wall.y1 > wall.y2 ? wall.y1 : wall.y2
+const Left = (wall) => wall.x1 < wall.x2 ? wall.x1 : wall.x2;
+const Top = (wall) => wall.y1 < wall.y2 ? wall.y1 : wall.y2;
+const Right = (wall) => wall.x1 > wall.x2 ? wall.x1 : wall.x2;
+const Bottom = (wall) => wall.y1 > wall.y2 ? wall.y1 : wall.y2;
 
 
 @Component({
   selector: 'app-view',
-  templateUrl: './view.component.html',
-  styleUrls: ['./view.component.scss'],
-  host: {
-    '(document:keydown)': 'onKeyDown($event)',
-    '(document:keyup)': 'onKeyUp($event)'
+  template: `<div class="main-container"><canvas id="main"></canvas></div>`,
+  styles: [`.main-container {
+    padding: 24px;
+    overflow: auto;
+    height: calc(100% - 199px)
   }
+  `],
+  host: {'(document:keydown)': 'onKeyDown($event)','(document:keyup)': 'onKeyUp($event)'}
 })
 export class ViewComponent implements OnInit, AfterViewInit {
 
   view: fabric.Canvas;
-  room: fabric.Group
+  room: fabric.Group;
   roomLayer: fabric.Group | fabric.Rect;
-  corners = []
-  walls: fabric.Line[] = []
+  corners = [];
+  walls: fabric.Line[] = [];
   lastObjectDefinition = null;
   lastObject = null;
 
   CTRL_KEY_DOWN = false;
-  MOVE_WALL_ID = -1
-  ROOM_SIZE = { width: 960, height: 480 }
-  DEFAULT_CHAIR = null
-  REMOVE_DW = false
+  MOVE_WALL_ID = -1;
+  ROOM_SIZE = { width: 960, height: 480 };
+  DEFAULT_CHAIR = null;
+  REMOVE_DW = false;
 
   constructor(public app: AppService) { }
 
@@ -63,75 +64,78 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.app.roomEdition.subscribe(doEdit => {
-      this.corners.forEach(c => this.setCornerStyle(c))
-      this.drawRoom()
-      if (doEdit) this.editRoom()
-      else this.cancelRoomEdition()
-    })
+      this.corners.forEach(c => this.setCornerStyle(c));
+      this.drawRoom();
+      if (doEdit) {
+        this.editRoom();
+      } else {
+        this.cancelRoomEdition();
+      }
+    });
 
     this.app.insertObject.subscribe(res => {
-      this.handleObjectInsertion(res)
-      this.saveState()
-    })
+      this.handleObjectInsertion(res);
+      this.saveState();
+    });
 
-    this.app.defaultChair.subscribe(res => this.DEFAULT_CHAIR = res)
+    this.app.defaultChair.subscribe(res => this.DEFAULT_CHAIR = res);
 
     this.app.performOperation.subscribe(operation => {
       switch (operation) {
 
         case 'UNDO':
-          this.undo()
-          break
+          this.undo();
+          break;
 
         case 'REDO':
-          this.redo()
-          break
+          this.redo();
+          break;
 
         case 'COPY':
-          this.copy()
-          break
+          this.copy();
+          break;
 
         case 'PASTE':
-          this.paste()
-          break
+          this.paste();
+          break;
 
         case 'DELETE':
-          this.delete()
-          break
+          this.delete();
+          break;
 
         case 'ROTATE':
-          this.rotate()
-          break
+          this.rotate();
+          break;
 
         case 'ROTATE_ANTI':
-          this.rotate(false)
-          break
+          this.rotate(false);
+          break;
 
         case 'GROUP':
-          this.group()
-          break
+          this.group();
+          break;
 
         case 'UNGROUP':
-          this.ungroup()
-          break
+          this.ungroup();
+          break;
 
         case 'HORIZONTAL':
         case 'VERTICAL':
-          this.placeInCenter(operation)
-          break
+          this.placeInCenter(operation);
+          break;
 
         case 'ROOM_OPERATION':
-          this.drawRoom()
-          break
+          this.drawRoom();
+          break;
 
         case 'PNG':
         case 'SVG':
-          this.saveAs(operation)
-          break
+          this.saveAs(operation);
+          break;
 
         case 'ZOOM':
-          this.setZoom()
-          break
+          this.setZoom();
+          break;
 
         case 'LEFT':
         case 'CENTER':
@@ -139,26 +143,26 @@ export class ViewComponent implements OnInit, AfterViewInit {
         case 'TOP':
         case 'MIDDLE':
         case 'BOTTOM':
-          this.arrange(operation)
-          break
+          this.arrange(operation);
+          break;
       }
-    })
+    });
   }
 
 
 
   ngAfterViewInit() {
     /** Initialize canvas */
-    this.setCanvasView()
+    this.setCanvasView();
     /** Add room */
-    this.setRoom(this.ROOM_SIZE)
-    this.saveState()
+    this.setRoom(this.ROOM_SIZE);
+    this.saveState();
   }
 
 
 
   get room_origin() {
-    return RL_ROOM_OUTER_SPACING + RL_ROOM_INNER_SPACING
+    return RL_ROOM_OUTER_SPACING + RL_ROOM_INNER_SPACING;
   }
 
 
@@ -166,39 +170,39 @@ export class ViewComponent implements OnInit, AfterViewInit {
   onKeyDown(event: KeyboardEvent) {
     // Ctrl Key is down
     if (event.ctrlKey) {
-      this.CTRL_KEY_DOWN = true
+      this.CTRL_KEY_DOWN = true;
       // Ctrl + Shift + Z
-      if (event.shiftKey && event.keyCode === 90) this.app.redo()
-      // Ctrl + Z
-      else if (event.keyCode === 90) this.app.undo()
-      // Ctrl + C
-      else if (event.keyCode === 67) this.app.copy()
-      // Ctrl + V
-      else if (event.keyCode === 86) this.paste()
-      // Ctrl + Left arrow
-      else if (event.keyCode === 37) this.rotate()
-      // Ctrl + Right arrow
-      else if (event.keyCode === 39) this.rotate(false)
-      // Ctrl + G
-      else if (event.keyCode === 71) this.group()
+      if (event.shiftKey && event.keyCode === 90) {
+        this.app.redo();
+      } else if (event.keyCode === 90) {
+        this.app.undo();
+      } else if (event.keyCode === 67) {
+        this.app.copy();
+      } else if (event.keyCode === 86) {
+        this.paste();
+      } else if (event.keyCode === 37) {
+        this.rotate();
+      } else if (event.keyCode === 39) {
+        this.rotate(false);
+      } else if (event.keyCode === 71) {
+        this.group();
+      }
+    } else if (event.keyCode === 46) {
+      this.delete();
+    } else if (event.keyCode === 37) {
+      this.move('LEFT');
+    } else if (event.keyCode === 38) {
+      this.move('UP');
+    } else if (event.keyCode === 39) {
+      this.move('RIGHT');
+    } else if (event.keyCode === 40) {
+        this.move('DOWN');
     }
-    // Delete
-    else if (event.keyCode === 46) this.delete()
-    // Left Arrow
-    else if (event.keyCode === 37) this.move('LEFT')
-    // Up Arrow
-    else if (event.keyCode === 38) this.move('UP')
-    // Right Arrow
-    else if (event.keyCode === 39) this.move('RIGHT')
-    // Down Arrow
-    else if (event.keyCode === 40) this.move('DOWN')
   }
-
-
 
   onKeyUp(event: KeyboardEvent) {
     if (event.key === 'Control') {
-      this.CTRL_KEY_DOWN = false
+      this.CTRL_KEY_DOWN = false;
     }
   }
 
@@ -208,28 +212,29 @@ export class ViewComponent implements OnInit, AfterViewInit {
 
   setGroupableState() {
     if (this.app.selections.length > 1) {
-      this.app.ungroupable = false
-      return
+      this.app.ungroupable = false;
+      return;
     }
 
-    const obj = this.view.getActiveObject()
-    const type = obj.name ? obj.name.split(':')[0] : ''
+    const obj = this.view.getActiveObject();
+    const type = obj.name ? obj.name.split(':')[0] : '';
 
-    if (RL_UNGROUPABLES.indexOf(type) > -1)
-      this.app.ungroupable = false
-    else
-      this.app.ungroupable = true
+    if (RL_UNGROUPABLES.indexOf(type) > -1) {
+      this.app.ungroupable = false;
+    } else {
+      this.app.ungroupable = true;
+    }
   }
 
 
   onSelected() {
-    const active = this.view.getActiveObject()
-    active.lockScalingX = true, active.lockScalingY = true
+    const active = this.view.getActiveObject();
+    active.lockScalingX = true, active.lockScalingY = true;
     if (!active.name) {
-      active.name = 'GROUP'
+      active.name = 'GROUP';
     }
-    this.app.selections = this.view.getActiveObjects()
-    this.setGroupableState()
+    this.app.selections = this.view.getActiveObjects();
+    this.setGroupableState();
   }
 
 
@@ -238,158 +243,168 @@ export class ViewComponent implements OnInit, AfterViewInit {
    * -------------------------------------------------------------------------------------------------------
    */
   setCanvasView() {
-    const canvas = new fabric.Canvas('main')
-    canvas.setWidth(RL_VIEW_WIDTH * RL_FOOT)
-    canvas.setHeight(RL_VIEW_HEIGHT * RL_FOOT)
-    this.view = canvas
+    const canvas = new fabric.Canvas('main');
+    canvas.setWidth(RL_VIEW_WIDTH * RL_FOOT);
+    canvas.setHeight(RL_VIEW_HEIGHT * RL_FOOT);
+    this.view = canvas;
 
     const cornersOfWall = (obj: fabric.Line) => {
-      const id = Number(obj.name.split(':')[1])
-      const v1Id = id
-      const v1 = this.corners[v1Id]
-      const v2Id = (id + 1) % this.walls.length
-      const v2 = this.corners[v2Id]
-      return { v1, v1Id, v2, v2Id }
-    }
+      const id = Number(obj.name.split(':')[1]);
+      const v1Id = id;
+      const v1 = this.corners[v1Id];
+      const v2Id = (id + 1) % this.walls.length;
+      const v2 = this.corners[v2Id];
+      return { v1, v1Id, v2, v2Id };
+    };
 
     this.view.on('selection:created', (e: fabric.IEvent) => {
-      if (this.app.roomEdit)
-        return
-      this.onSelected()
-    })
+      if (this.app.roomEdit) {
+        return;
+      }
+      this.onSelected();
+    });
 
     this.view.on('selection:updated', (e: fabric.IEvent) => {
-      if (this.app.roomEdit)
-        return
-      this.onSelected()
-    })
+      if (this.app.roomEdit) {
+        return;
+      }
+      this.onSelected();
+    });
 
     this.view.on('selection:cleared', (e: fabric.IEvent) => {
-      if (this.app.roomEdit)
-        return
-      this.app.selections = []
-      this.app.ungroupable = false
-    })
+      if (this.app.roomEdit) {
+        return;
+      }
+      this.app.selections = [];
+      this.app.ungroupable = false;
+    });
 
     this.view.on('object:moved', () => {
-      if (this.MOVE_WALL_ID !== -1)
-        this.MOVE_WALL_ID = -1
-      this.saveState()
-    })
+      if (this.MOVE_WALL_ID !== -1) {
+        this.MOVE_WALL_ID = -1;
+      }
+      this.saveState();
+    });
 
-    this.view.on('object:rotated', () => this.saveState())
+    this.view.on('object:rotated', () => this.saveState());
 
     this.view.on('mouse:down:before', (e: fabric.IEvent) => {
-      const obj = e.target
+      const obj = e.target;
 
       if (this.app.roomEdit && obj && obj.name.indexOf('WALL') > -1 && obj instanceof Line) {
-        let { v1, v2, v1Id, v2Id } = cornersOfWall(obj)
-        const v0Id = (v1Id === 0) ? this.corners.length - 1 : v1Id - 1
-        const v3Id = (v2Id === this.corners.length - 1) ? 0 : v2Id + 1
-        const v0 = this.corners[v0Id]
-        const v3 = this.corners[v3Id]
+        let { v1, v2, v1Id, v2Id } = cornersOfWall(obj);
+        const v0Id = (v1Id === 0) ? this.corners.length - 1 : v1Id - 1;
+        const v3Id = (v2Id === this.corners.length - 1) ? 0 : v2Id + 1;
+        const v0 = this.corners[v0Id];
+        const v3 = this.corners[v3Id];
 
-        this.MOVE_WALL_ID = v1Id
+        this.MOVE_WALL_ID = v1Id;
 
         if ((v0.top === v1.top && v1.top === v2.top) || (v0.left === v1.left && v1.left === v2.left)) {
-          this.corners.splice(v1Id, 0, this.drawCorner(new Point(v1.left, v1.top)))
-          this.MOVE_WALL_ID = v1Id + 1
-          v2Id += 1
+          this.corners.splice(v1Id, 0, this.drawCorner(new Point(v1.left, v1.top)));
+          this.MOVE_WALL_ID = v1Id + 1;
+          v2Id += 1;
         }
 
-        if ((v1.top === v2.top && v2.top === v3.top) || (v1.left === v2.left && v2.left === v3.left))
-          this.corners.splice(v2Id + 1, 0, this.drawCorner(new Point(v2.left, v2.top)))
+        if ((v1.top === v2.top && v2.top === v3.top) || (v1.left === v2.left && v2.left === v3.left)) {
+          this.corners.splice(v2Id + 1, 0, this.drawCorner(new Point(v2.left, v2.top)));
+        }
 
-        this.drawRoom()
-        this.saveState()
+        this.drawRoom();
+        this.saveState();
       }
-    })
+    });
 
     this.view.on('object:moving', (e: fabric.IEvent) => {
       if (this.MOVE_WALL_ID !== -1) {
-        const p = e['pointer']
-        const v1 = this.corners[this.MOVE_WALL_ID]
-        const v2 = this.corners[(this.MOVE_WALL_ID + 1) % this.corners.length]
-        const direction = v1.left === v2.left ? 'HORIZONTAL' : 'VERTICAL'
+        const p = e['pointer'];
+        const v1 = this.corners[this.MOVE_WALL_ID];
+        const v2 = this.corners[(this.MOVE_WALL_ID + 1) % this.corners.length];
+        const direction = v1.left === v2.left ? 'HORIZONTAL' : 'VERTICAL';
 
-        if (p.y < RL_ROOM_OUTER_SPACING) p.y = RL_ROOM_OUTER_SPACING
-        if (p.x < RL_ROOM_OUTER_SPACING) p.x = RL_ROOM_OUTER_SPACING
+        if (p.y < RL_ROOM_OUTER_SPACING) { p.y = RL_ROOM_OUTER_SPACING; }
+        if (p.x < RL_ROOM_OUTER_SPACING) { p.x = RL_ROOM_OUTER_SPACING; }
 
-        if (direction === 'VERTICAL')
-          v1.top = v2.top = p.y
-        else
-          v1.left = v2.left = p.x
+        if (direction === 'VERTICAL') {
+          v1.top = v2.top = p.y;
+        } else {
+          v1.left = v2.left = p.x;
+        }
 
-        this.drawRoom()
+        this.drawRoom();
       }
 
-      const obj = e.target
-      const point = e['pointer']
+      const obj = e.target;
+      const point = e['pointer'];
 
       if (obj && this.isDW(obj) && obj instanceof fabric.Group) {
-        let wall, distance = 999
-        const dist2 = (v, w) => (v.x - w.x) * (v.x - w.x) + (v.y - w.y) * (v.y - w.y)
+        let wall, distance = 999;
+        const dist2 = (v, w) => (v.x - w.x) * (v.x - w.x) + (v.y - w.y) * (v.y - w.y);
         const distToSegmentSquared = (p, v, w) => {
-          var l2 = dist2(v, w);
-          if (l2 == 0) return dist2(p, v);
-          var t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
-          if (t < 0) return dist2(p, v);
-          if (t > 1) return dist2(p, w);
+          const l2 = dist2(v, w);
+          if (l2 === 0) { return dist2(p, v); }
+          const t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+          if (t < 0) { return dist2(p, v); }
+          if (t > 1) { return dist2(p, w); }
           return dist2(p, { x: v.x + t * (w.x - v.x), y: v.y + t * (w.y - v.y) });
-        }
-        const point_to_line = (p, v, w) => Math.sqrt(distToSegmentSquared(p, v, w))
+        };
+        const point_to_line = (p, v, w) => Math.sqrt(distToSegmentSquared(p, v, w));
 
         this.walls.forEach(w => {
-          const d = point_to_line(point, { x: w.x1, y: w.y1 }, { x: w.x2, y: w.y2 })
-          if (d < distance)
-            distance = d, wall = w
-        })
+          const d = point_to_line(point, { x: w.x1, y: w.y1 }, { x: w.x2, y: w.y2 });
+          if (d < distance) {
+            distance = d, wall = w;
+          }
+        });
 
-        if (distance > 20)
-          this.REMOVE_DW = true
-        else {
-          this.REMOVE_DW = false
-          const direction = this.directionOfWall(wall)
-          if (direction === HORIZONTAL)
-            this.locateDW(obj, wall, point.x, Top(wall))
-          else
-            this.locateDW(obj, wall, Left(wall), point.y)
+        if (distance > 20) {
+          this.REMOVE_DW = true;
+        } else {
+          this.REMOVE_DW = false;
+          const direction = this.directionOfWall(wall);
+          if (direction === HORIZONTAL) {
+            this.locateDW(obj, wall, point.x, Top(wall));
+          } else {
+            this.locateDW(obj, wall, Left(wall), point.y);
+          }
         }
       }
-    })
+    });
 
     this.view.on('mouse:up', (e: fabric.IEvent) => {
-      const obj = e.target
+      const obj = e.target;
       if (this.REMOVE_DW) {
-        this.view.remove(obj)
-        this.REMOVE_DW = false
+        this.view.remove(obj);
+        this.REMOVE_DW = false;
       }
-    })
+    });
 
     this.view.on('mouse:dblclick', (e: fabric.IEvent) => {
-      const obj = e.target
+      const obj = e.target;
 
       if (this.app.roomEdit && this.app.roomEditOperate === 'CORNER' && obj && obj.name.indexOf('WALL') > -1 && obj instanceof Line) {
-        const p = e['pointer']
-        const { v1, v1Id, v2, v2Id } = cornersOfWall(obj)
-        const ind = v1Id < v2Id ? v1Id : v2Id
+        const p = e['pointer'];
+        const { v1, v1Id, v2, v2Id } = cornersOfWall(obj);
+        const ind = v1Id < v2Id ? v1Id : v2Id;
 
-        if (v1.left === v2.left)
-          p.x = v1.left
-        else if (v1.top === v2.top)
-          p.y = v1.top
+        if (v1.left === v2.left) {
+          p.x = v1.left;
+        } else if (v1.top === v2.top) {
+          p.y = v1.top;
+             }
 
-        const newCorner = this.drawCorner(new Point(p.x, p.y))
+        const newCorner = this.drawCorner(new Point(p.x, p.y));
 
-        if (Math.abs(v1Id - v2Id) != 1)
-          this.corners.push(newCorner)
-        else
-          this.corners.splice(ind + 1, 0, newCorner)
+        if (Math.abs(v1Id - v2Id) != 1) {
+          this.corners.push(newCorner);
+        } else {
+          this.corners.splice(ind + 1, 0, newCorner);
+        }
 
-        this.drawRoom()
-        this.saveState()
+        this.drawRoom();
+        this.saveState();
       }
-    })
+    });
   }
 
 
@@ -401,17 +416,17 @@ export class ViewComponent implements OnInit, AfterViewInit {
    */
   setRoom({ width, height }) {
     if (this.walls.length) {
-      this.view.remove(...this.walls)
-      this.view.renderAll()
+      this.view.remove(...this.walls);
+      this.view.renderAll();
     }
 
-    const LT = new Point(RL_ROOM_OUTER_SPACING, RL_ROOM_OUTER_SPACING)
-    const RT = new Point(LT.x + width, LT.y)
-    const LB = new Point(LT.x, LT.y + height)
-    const RB = new Point(RT.x, LB.y)
+    const LT = new Point(RL_ROOM_OUTER_SPACING, RL_ROOM_OUTER_SPACING);
+    const RT = new Point(LT.x + width, LT.y);
+    const LB = new Point(LT.x, LT.y + height);
+    const RB = new Point(RT.x, LB.y);
 
-    this.corners = [LT, RT, RB, LB].map(p => this.drawCorner(p))
-    this.drawRoom()
+    this.corners = [LT, RT, RB, LB].map(p => this.drawCorner(p));
+    this.drawRoom();
   }
 
 
@@ -420,12 +435,12 @@ export class ViewComponent implements OnInit, AfterViewInit {
    * -------------------------------------------------------------------------------------------------------
    */
   setCornerStyle(c: fabric.Rect) {
-    c.moveCursor = this.view.freeDrawingCursor
-    c.hoverCursor = this.view.freeDrawingCursor
-    c.selectable = false
-    c.evented = false
-    c.width = c.height = (RL_ROOM_INNER_SPACING / (this.app.roomEdit ? 1.5 : 2)) * 2
-    c.set('fill', this.app.roomEdit ? RL_CORNER_FILL : RL_ROOM_STROKE)
+    c.moveCursor = this.view.freeDrawingCursor;
+    c.hoverCursor = this.view.freeDrawingCursor;
+    c.selectable = false;
+    c.evented = false;
+    c.width = c.height = (RL_ROOM_INNER_SPACING / (this.app.roomEdit ? 1.5 : 2)) * 2;
+    c.set('fill', this.app.roomEdit ? RL_CORNER_FILL : RL_ROOM_STROKE);
   }
 
 
@@ -443,9 +458,9 @@ export class ViewComponent implements OnInit, AfterViewInit {
       originX: 'center',
       originY: 'center',
       name: 'CORNER'
-    })
-    this.setCornerStyle(c)
-    return c
+    });
+    this.setCornerStyle(c);
+    return c;
   }
 
 
@@ -455,10 +470,10 @@ export class ViewComponent implements OnInit, AfterViewInit {
    */
   drawRoom() {
 
-    const exists = this.view.getObjects().filter(obj => obj.name.indexOf('WALL') > -1 || obj.name === 'CORNER')
-    this.view.remove(...exists)
+    const exists = this.view.getObjects().filter(obj => obj.name.indexOf('WALL') > -1 || obj.name === 'CORNER');
+    this.view.remove(...exists);
 
-    this.view.add(...this.corners)
+    this.view.add(...this.corners);
 
     const wall = (coords: number[], index: number) => new Line(coords, {
       stroke: RL_ROOM_STROKE,
@@ -472,51 +487,54 @@ export class ViewComponent implements OnInit, AfterViewInit {
       selectable: this.app.roomEdit,
       evented: this.app.roomEdit,
       cornerStyle: 'rect'
-    })
+    });
 
-    let LT = new Point(9999, 9999), RB = new Point(0, 0)
+    let LT = new Point(9999, 9999), RB = new Point(0, 0);
 
     this.walls = this.corners.map((corner, i) => {
-      const start = corner
-      const end = (i === this.corners.length - 1) ? this.corners[0] : this.corners[i + 1]
+      const start = corner;
+      const end = (i === this.corners.length - 1) ? this.corners[0] : this.corners[i + 1];
 
-      if (corner.top < LT.x && corner.left < LT.y) LT = new Point(corner.left, corner.top)
-      if (corner.top > RB.y && corner.left > RB.y) RB = new Point(corner.left, corner.top)
+      if (corner.top < LT.x && corner.left < LT.y) { LT = new Point(corner.left, corner.top); }
+      if (corner.top > RB.y && corner.left > RB.y) { RB = new Point(corner.left, corner.top); }
 
-      const w = wall([start.left, start.top, end.left, end.top], i)
-      return w
-    })
+      const w = wall([start.left, start.top, end.left, end.top], i);
+      return w;
+    });
 
-    this.view.add(...this.walls)
-    this.walls.forEach(w => w.sendToBack())
-    this.ROOM_SIZE = { width: RB.x - LT.x, height: RB.y - LT.y }
+    this.view.add(...this.walls);
+    this.walls.forEach(w => w.sendToBack());
+    this.ROOM_SIZE = { width: RB.x - LT.x, height: RB.y - LT.y };
   }
 
 
   locateDW(dw: fabric.Group, wall: fabric.Line, x: number, y: number) {
-    const dWall = this.directionOfWall(wall)
-    const dDW = dw.angle % 180 === 0 ? HORIZONTAL : VERTICAL
-    if (dWall != dDW)
-      dw.angle = (dw.angle + 90) % 360
-    dw.top = y, dw.left = x
-    const center = dw.getCenterPoint()
-    if (dWall === HORIZONTAL)
-      center.y < dw.top ? dw.top += OFFSET : dw.top -= OFFSET
-    else
-      center.x < dw.left ? dw.left += OFFSET : dw.left -= OFFSET
-    return dw
+    const dWall = this.directionOfWall(wall);
+    const dDW = dw.angle % 180 === 0 ? HORIZONTAL : VERTICAL;
+    if (dWall !== dDW) {
+      dw.angle = (dw.angle + 90) % 360;
+    }
+    dw.top = y, dw.left = x;
+    const center = dw.getCenterPoint();
+    if (dWall === HORIZONTAL) {
+      center.y < dw.top ? dw.top += OFFSET : dw.top -= OFFSET;
+    } else {
+      center.x < dw.left ? dw.left += OFFSET : dw.left -= OFFSET;
+    }
+    return dw;
   }
 
   setDWOrigin(dw: fabric.Group) {
-    if (!dw.flipX && !dw.flipY)
-      dw.originX = 'left', dw.originY = 'top'
-    else if (dw.flipX && !dw.flipY)
-      dw.originX = 'right', dw.originY = 'top'
-    else if (!dw.flipX && dw.flipY)
-      dw.originX = 'left', dw.originY = 'bottom'
-    else if (dw.flipX && dw.flipY)
-      dw.originX = 'right', dw.originY = 'bottom'
-    return dw
+    if (!dw.flipX && !dw.flipY) {
+      dw.originX = 'left', dw.originY = 'top';
+    } else if (dw.flipX && !dw.flipY) {
+      dw.originX = 'right', dw.originY = 'top';
+         } else if (!dw.flipX && dw.flipY) {
+      dw.originX = 'left', dw.originY = 'bottom';
+         } else if (dw.flipX && dw.flipY) {
+      dw.originX = 'right', dw.originY = 'bottom';
+         }
+    return dw;
   }
 
 
@@ -526,86 +544,90 @@ export class ViewComponent implements OnInit, AfterViewInit {
   editRoom() {
     this.view.getObjects().forEach(r => {
       if (r.name.indexOf('WALL') !== -1) {
-        r.selectable = true
-        r.evented = true
+        r.selectable = true;
+        r.evented = true;
       } else {
-        r.selectable = false
-        r.evented = false
+        r.selectable = false;
+        r.evented = false;
       }
-    })
-    if (this.app.roomEditStates.length === 0)
-      this.saveState()
+    });
+    if (this.app.roomEditStates.length === 0) {
+      this.saveState();
+    }
   }
 
   cancelRoomEdition() {
     this.view.getObjects().forEach(r => {
       if (r.name.indexOf('WALL') !== -1 || r.name.indexOf('CORNER') !== -1) {
-        r.selectable = false
-        r.evented = false
+        r.selectable = false;
+        r.evented = false;
       } else {
-        r.selectable = true
-        r.evented = true
+        r.selectable = true;
+        r.evented = true;
       }
-    })
+    });
   }
 
   handleObjectInsertion({ type, object }) {
 
     if (type === 'ROOM') {
-      this.setRoom(object)
-      return
+      this.setRoom(object);
+      return;
     }
 
-    const group = _.createFurniture(type, object, this.DEFAULT_CHAIR)
+    const group = _.createFurniture(type, object, this.DEFAULT_CHAIR);
 
     if (type === 'DOOR' || type === 'WINDOW') {
-      group.originX = 'center'
-      group.originY = 'top'
+      group.originX = 'center';
+      group.originY = 'top';
 
 
-      const dws = this.filterObjects(['DOOR', 'WINDOW'])
-      const dw = dws.length ? dws[dws.length - 1] : null
+      const dws = this.filterObjects(['DOOR', 'WINDOW']);
+      const dw = dws.length ? dws[dws.length - 1] : null;
 
-      let wall, x, y
+      let wall, x, y;
       if (!dw) {
-        wall = this.walls[0]
-        x = Left(wall) + RL_AISLEGAP
-        y = Top(wall)
+        wall = this.walls[0];
+        x = Left(wall) + RL_AISLEGAP;
+        y = Top(wall);
       } else {
-        const od = dw.angle % 180 === 0 ? HORIZONTAL : VERTICAL
+        const od = dw.angle % 180 === 0 ? HORIZONTAL : VERTICAL;
 
-        let placeOnNextWall = false
-        wall = this.wallOfDW(dw)
+        let placeOnNextWall = false;
+        wall = this.wallOfDW(dw);
 
         if (od === HORIZONTAL) {
-          x = dw.left + dw.width + RL_AISLEGAP
-          y = Top(wall)
-          if (x + group.width > Right(wall))
-            placeOnNextWall = true
+          x = dw.left + dw.width + RL_AISLEGAP;
+          y = Top(wall);
+          if (x + group.width > Right(wall)) {
+            placeOnNextWall = true;
+          }
         } else {
-          y = dw.top + dw.width + RL_AISLEGAP
-          x = Left(wall)
-          if (y + group.width > Bottom(wall))
-            placeOnNextWall = true
+          y = dw.top + dw.width + RL_AISLEGAP;
+          x = Left(wall);
+          if (y + group.width > Bottom(wall)) {
+            placeOnNextWall = true;
+          }
         }
 
         if (placeOnNextWall) {
-          wall = this.walls[(Number(wall.name.split(':')[1]) + 1) % this.walls.length]
-          const nd = this.directionOfWall(wall)
+          wall = this.walls[(Number(wall.name.split(':')[1]) + 1) % this.walls.length];
+          const nd = this.directionOfWall(wall);
 
-          if (nd === HORIZONTAL)
-            x = Left(wall) + RL_AISLEGAP, y = Top(wall)
-          else
-            x = Left(wall), y = Top(wall) + RL_AISLEGAP
+          if (nd === HORIZONTAL) {
+            x = Left(wall) + RL_AISLEGAP, y = Top(wall);
+          } else {
+            x = Left(wall), y = Top(wall) + RL_AISLEGAP;
+          }
         }
       }
 
-      this.locateDW(group, wall, x, y)
+      this.locateDW(group, wall, x, y);
 
-      group.hasBorders = false
-      this.view.add(group)
+      group.hasBorders = false;
+      this.view.add(group);
 
-      return
+      return;
     }
 
     // retrieve spacing from object, use rlAisleGap if not specified
@@ -629,8 +651,8 @@ export class ViewComponent implements OnInit, AfterViewInit {
       const useLR = Math.max(newLR, lastLR), useTB = Math.max(newTB, lastTB);
 
       // using left/top vocab, though all objects are now centered
-      const lastWidth = this.lastObjectDefinition.width || 100
-      const lastHeight = this.lastObjectDefinition.height || 40
+      const lastWidth = this.lastObjectDefinition.width || 100;
+      const lastHeight = this.lastObjectDefinition.height || 40;
 
       let newLeft = this.lastObject.left + lastWidth + useLR;
       let newTop = this.lastObject.top;
@@ -644,284 +666,300 @@ export class ViewComponent implements OnInit, AfterViewInit {
       group.left = newLeft;
       group.top = newTop;
 
-      if ((group.left - group.width / 2) < this.room_origin) group.left += this.room_origin
-      if ((group.top - group.height / 2) < this.room_origin) group.top += this.room_origin
+      if ((group.left - group.width / 2) < this.room_origin) { group.left += this.room_origin; }
+      if ((group.top - group.height / 2) < this.room_origin) { group.top += this.room_origin; }
     }
 
-    this.view.add(group)
-    this.view.setActiveObject(group)
+    this.view.add(group);
+    this.view.setActiveObject(group);
 
-    this.lastObject = group
-    this.lastObjectDefinition = object
+    this.lastObject = group;
+    this.lastObjectDefinition = object;
   }
 
 
   /** Save current state */
   saveState() {
-    const state = this.view.toDatalessJSON(['name', 'hasControls', 'selectable', 'hasBorders', 'evented', 'hoverCursor', 'moveCursor'])
-    this.app.saveState.next(JSON.stringify(state))
+    const state = this.view.toDatalessJSON(['name', 'hasControls', 'selectable', 'hasBorders', 'evented', 'hoverCursor', 'moveCursor']);
+    this.app.saveState.next(JSON.stringify(state));
   }
 
 
   undo() {
-    let current = null
+    let current = null;
 
     if (this.app.roomEdit) {
-      const state = this.app.roomEditStates.pop()
-      this.app.roomEditRedoStates.push(state)
-      current = this.app.roomEditStates[this.app.roomEditStates.length - 1]
+      const state = this.app.roomEditStates.pop();
+      this.app.roomEditRedoStates.push(state);
+      current = this.app.roomEditStates[this.app.roomEditStates.length - 1];
     } else {
-      const state = this.app.states.pop()
-      this.app.redoStates.push(state)
-      current = this.app.states[this.app.states.length - 1]
+      const state = this.app.states.pop();
+      this.app.redoStates.push(state);
+      current = this.app.states[this.app.states.length - 1];
     }
 
-    this.view.clear()
+    this.view.clear();
     this.view.loadFromDatalessJSON(current, () => {
-      this.view.renderAll()
-      this.corners = this.view.getObjects().filter(obj => obj.name === 'CORNER')
-      this.drawRoom()
-    })
+      this.view.renderAll();
+      this.corners = this.view.getObjects().filter(obj => obj.name === 'CORNER');
+      this.drawRoom();
+    });
   }
 
 
   /** Redo operation */
   redo() {
-    let current = null
+    let current = null;
 
     if (this.app.roomEdit) {
-      current = this.app.roomEditRedoStates.pop()
-      this.app.roomEditStates.push(current)
+      current = this.app.roomEditRedoStates.pop();
+      this.app.roomEditStates.push(current);
     } else {
-      current = this.app.redoStates.pop()
-      this.app.states.push(current)
+      current = this.app.redoStates.pop();
+      this.app.states.push(current);
     }
 
-    this.view.clear()
+    this.view.clear();
     this.view.loadFromDatalessJSON(current, () => {
-      this.view.renderAll()
-      this.corners = this.view.getObjects().filter(obj => obj.name === 'CORNER')
-      this.drawRoom()
-    })
+      this.view.renderAll();
+      this.corners = this.view.getObjects().filter(obj => obj.name === 'CORNER');
+      this.drawRoom();
+    });
   }
 
 
   /** Copy operation */
   copy() {
-    if (this.app.roomEdit)
-      return
-    const active = this.view.getActiveObject()
-    if (!active) {
-      return
+    if (this.app.roomEdit) {
+      return;
     }
-    active.clone(cloned => this.app.copied = cloned, ['name', 'hasControls'])
+    const active = this.view.getActiveObject();
+    if (!active) {
+      return;
+    }
+    active.clone(cloned => this.app.copied = cloned, ['name', 'hasControls']);
   }
 
   /** Paste operation */
   paste() {
     if (!this.app.copied || this.app.roomEdit) {
-      return
+      return;
     }
     this.app.copied.clone((cloned) => {
-      this.view.discardActiveObject()
+      this.view.discardActiveObject();
       cloned.set({
         left: cloned.left + RL_AISLEGAP,
         top: cloned.top + RL_AISLEGAP
       });
       if (cloned.type === 'activeSelection') {
-        cloned.canvas = this.view
-        cloned.forEachObject(obj => this.view.add(obj))
-        cloned.setCoords()
+        cloned.canvas = this.view;
+        cloned.forEachObject(obj => this.view.add(obj));
+        cloned.setCoords();
       } else {
-        this.view.add(cloned)
+        this.view.add(cloned);
       }
-      this.app.copied.top += RL_AISLEGAP
-      this.app.copied.left += RL_AISLEGAP
-      this.view.setActiveObject(cloned)
-      this.view.requestRenderAll()
-      this.saveState()
-    }, ['name', 'hasControls'])
+      this.app.copied.top += RL_AISLEGAP;
+      this.app.copied.left += RL_AISLEGAP;
+      this.view.setActiveObject(cloned);
+      this.view.requestRenderAll();
+      this.saveState();
+    }, ['name', 'hasControls']);
   }
 
   /** Delete operation */
   delete() {
-    if (this.app.roomEdit)
-      return
-    this.app.selections.forEach(selection => this.view.remove(selection))
-    this.view.discardActiveObject()
-    this.view.requestRenderAll()
-    this.saveState()
+    if (this.app.roomEdit) {
+      return;
+    }
+    this.app.selections.forEach(selection => this.view.remove(selection));
+    this.view.discardActiveObject();
+    this.view.requestRenderAll();
+    this.saveState();
   }
 
   /** Rotate Operation */
   rotate(clockwise = true) {
-    if (this.app.roomEdit)
-      return
-
-    let angle = this.CTRL_KEY_DOWN ? 90 : 15
-    const obj = this.view.getActiveObject()
-
-    if (!obj) return
-
-    if ((obj.originX !== 'center' || obj.originY !== 'center') && obj.centeredRotation) {
-      obj.originX = 'center'
-      obj.originY = 'center'
-      obj.left += obj.width / 2
-      obj.top += obj.height / 2
+    if (this.app.roomEdit) {
+      return;
     }
 
-    if (this.isDW(obj))
-      angle = obj.angle + (clockwise ? 180 : -180)
-    else
-      angle = obj.angle + (clockwise ? angle : -angle)
+    let angle = this.CTRL_KEY_DOWN ? 90 : 15;
+    const obj = this.view.getActiveObject();
 
-    if (angle > 360) angle -= 360
-    else if (angle < 0) angle += 360
+    if (!obj) { return; }
 
-    obj.angle = angle
-    this.view.requestRenderAll()
+    if ((obj.originX !== 'center' || obj.originY !== 'center') && obj.centeredRotation) {
+      obj.originX = 'center';
+      obj.originY = 'center';
+      obj.left += obj.width / 2;
+      obj.top += obj.height / 2;
+    }
+
+    if (this.isDW(obj)) {
+      angle = obj.angle + (clockwise ? 180 : -180);
+    } else {
+      angle = obj.angle + (clockwise ? angle : -angle);
+    }
+
+    if (angle > 360) { angle -= 360; } else if (angle < 0) { angle += 360; }
+
+    obj.angle = angle;
+    this.view.requestRenderAll();
   }
 
   /** Group */
   group() {
-    if (this.app.roomEdit)
-      return
+    if (this.app.roomEdit) {
+      return;
+    }
 
-    const active = this.view.getActiveObject()
-    if (!(this.app.selections.length > 1 && active instanceof fabric.ActiveSelection))
-      return
+    const active = this.view.getActiveObject();
+    if (!(this.app.selections.length > 1 && active instanceof fabric.ActiveSelection)) {
+      return;
+    }
 
-    active.toGroup()
-    active.lockScalingX = true, active.lockScalingY = true
-    this.onSelected()
-    this.view.renderAll()
-    this.saveState()
+    active.toGroup();
+    active.lockScalingX = true, active.lockScalingY = true;
+    this.onSelected();
+    this.view.renderAll();
+    this.saveState();
   }
 
   ungroup() {
-    if (this.app.roomEdit)
-      return
+    if (this.app.roomEdit) {
+      return;
+    }
 
-    const active = this.view.getActiveObject()
-    if (!(active && active instanceof fabric.Group))
-      return
+    const active = this.view.getActiveObject();
+    if (!(active && active instanceof fabric.Group)) {
+      return;
+    }
 
-    active.toActiveSelection()
-    active.lockScalingX = true, active.lockScalingY = true
-    this.onSelected()
-    this.view.renderAll()
-    this.saveState()
+    active.toActiveSelection();
+    active.lockScalingX = true, active.lockScalingY = true;
+    this.onSelected();
+    this.view.renderAll();
+    this.saveState();
   }
 
   move(direction, increament = 6) {
-    if (this.app.roomEdit)
-      return
+    if (this.app.roomEdit) {
+      return;
+    }
 
-    const active = this.view.getActiveObject()
-    if (!active)
-      return
+    const active = this.view.getActiveObject();
+    if (!active) {
+      return;
+    }
     switch (direction) {
       case 'LEFT':
-        active.left -= increament
-        break
+        active.left -= increament;
+        break;
       case 'UP':
-        active.top -= increament
-        break
+        active.top -= increament;
+        break;
       case 'RIGHT':
-        active.left += increament
-        break
+        active.left += increament;
+        break;
       case 'DOWN':
-        active.top += increament
-        break
+        active.top += increament;
+        break;
     }
-    this.view.requestRenderAll()
-    this.saveState()
+    this.view.requestRenderAll();
+    this.saveState();
   }
 
   setZoom() {
-    this.view.setZoom(this.app.zoom / 100)
-    this.view.renderAll()
+    this.view.setZoom(this.app.zoom / 100);
+    this.view.renderAll();
   }
 
   placeInCenter(direction) {
-    const active = this.view.getActiveObject()
+    const active = this.view.getActiveObject();
 
-    if (!active)
-      return
-
-    if (direction === 'HORIZONTAL') {
-      active.left = this.ROOM_SIZE.width / 2 - (active.originX === 'center' ? 0 : active.width / 2)
-    } else {
-      active.top = this.ROOM_SIZE.height / 2 - (active.originX === 'center' ? 0 : active.height / 2)
+    if (!active) {
+      return;
     }
 
-    active.setCoords()
-    this.view.requestRenderAll()
-    this.saveState()
+    if (direction === 'HORIZONTAL') {
+      active.left = this.ROOM_SIZE.width / 2 - (active.originX === 'center' ? 0 : active.width / 2);
+    } else {
+      active.top = this.ROOM_SIZE.height / 2 - (active.originX === 'center' ? 0 : active.height / 2);
+    }
+
+    active.setCoords();
+    this.view.requestRenderAll();
+    this.saveState();
   }
 
   arrange(action: string) {
-    const rect = this.getBoundingRect(this.app.selections)
-    action = action.toLowerCase()
+    const rect = this.getBoundingRect(this.app.selections);
+    action = action.toLowerCase();
     this.app.selections.forEach(s => {
-      if (action === 'left' || action === 'right' || action === 'center')
-        s.left = rect[action]
-      else
-        s.top = rect[action]
-    })
-    this.view.renderAll()
-    this.saveState()
+      if (action === 'left' || action === 'right' || action === 'center') {
+        s.left = rect[action];
+      } else {
+        s.top = rect[action];
+      }
+    });
+    this.view.renderAll();
+    this.saveState();
   }
 
   filterObjects(names: string[]) {
-    return this.view.getObjects().filter(obj => names.some(n => obj.name.indexOf(n) > -1))
+    return this.view.getObjects().filter(obj => names.some(n => obj.name.indexOf(n) > -1));
   }
 
 
   wallOfDW(dw: fabric.Group | fabric.Object) {
-    const d = dw.angle % 180 === 0 ? HORIZONTAL : VERTICAL
-    return this.walls.find(w => Math.abs(d === HORIZONTAL ? w.top - dw.top : w.left - dw.left) === OFFSET)
+    const d = dw.angle % 180 === 0 ? HORIZONTAL : VERTICAL;
+    return this.walls.find(w => Math.abs(d === HORIZONTAL ? w.top - dw.top : w.left - dw.left) === OFFSET);
   }
 
   directionOfWall(wall: fabric.Line) {
-    if (wall.x1 === wall.x2)
-      return VERTICAL
-    else
-      return HORIZONTAL
+    if (wall.x1 === wall.x2) {
+      return VERTICAL;
+    } else {
+      return HORIZONTAL;
+    }
   }
 
   isDW(object) {
-    return object.name.indexOf('DOOR') > -1 || object.name.indexOf('WINDOW') > -1
+    return object.name.indexOf('DOOR') > -1 || object.name.indexOf('WINDOW') > -1;
   }
 
   getBoundingRect(objects: any[]) {
-    let top = 9999, left = 9999, right = 0, bottom = 0
+    let top = 9999, left = 9999, right = 0, bottom = 0;
     objects.forEach(obj => {
-      if (obj.left < top)
-        top = obj.top
-      if (obj.left < left)
-        left = obj.left
-      if (obj.top > bottom)
-        bottom = obj.top
-      if (obj.left > right)
-        right = obj.left
-    })
+      if (obj.left < top) {
+        top = obj.top;
+      }
+      if (obj.left < left) {
+        left = obj.left;
+      }
+      if (obj.top > bottom) {
+        bottom = obj.top;
+      }
+      if (obj.left > right) {
+        right = obj.left;
+      }
+    });
 
-    const center = (left + right) / 2
-    const middle = (top + bottom) / 2
+    const center = (left + right) / 2;
+    const middle = (top + bottom) / 2;
 
-    return { left, top, right, bottom, center, middle }
+    return { left, top, right, bottom, center, middle };
   }
 
   saveAs(format: string) {
 
-    const { right, bottom } = this.getBoundingRect(this.corners)
-    const width = this.view.getWidth()
-    const height = this.view.getHeight()
+    const { right, bottom } = this.getBoundingRect(this.corners);
+    const width = this.view.getWidth();
+    const height = this.view.getHeight();
 
-    this.view.setWidth(right + RL_ROOM_OUTER_SPACING)
-    this.view.setHeight(bottom + RL_ROOM_OUTER_SPACING + 12)
-    this.view.setBackgroundColor('white', () => { })
+    this.view.setWidth(right + RL_ROOM_OUTER_SPACING);
+    this.view.setHeight(bottom + RL_ROOM_OUTER_SPACING + 12);
+    this.view.setBackgroundColor('white', () => { });
 
     const credit = new fabric.Text(RL_CREDIT_TEXT,
       {
@@ -929,30 +967,30 @@ export class ViewComponent implements OnInit, AfterViewInit {
         left: RL_ROOM_OUTER_SPACING,
         top: bottom + RL_ROOM_OUTER_SPACING - RL_CREDIT_TEXT_PARAMS.fontSize
       }
-    )
-    this.view.add(credit)
-    this.view.discardActiveObject()
-    this.view.renderAll()
+    );
+    this.view.add(credit);
+    this.view.discardActiveObject();
+    this.view.renderAll();
 
     const restore = () => {
-      this.view.remove(credit)
-      this.view.setBackgroundColor('transparent', () => { })
-      this.view.setWidth(width)
-      this.view.setHeight(height)
-      this.view.renderAll()
-    }
+      this.view.remove(credit);
+      this.view.setBackgroundColor('transparent', () => { });
+      this.view.setWidth(width);
+      this.view.setHeight(height);
+      this.view.renderAll();
+    };
 
     if (format === 'PNG') {
-      const canvas: any = document.getElementById('main')
+      const canvas: any = document.getElementById('main');
       canvas.toBlob((blob: Blob) => {
-        saveAs(blob, `room_layout_${formatDate(new Date(), 'yyyy-MM-dd-hh-mm-ss', 'en')}.png`)
-        restore()
-      })
+        saveAs(blob, `room_layout_${formatDate(new Date(), 'yyyy-MM-dd-hh-mm-ss', 'en')}.png`);
+        restore();
+      });
     } else if (format === 'SVG') {
-      const svg = this.view.toSVG()
-      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-      saveAs(blob, `room_layout_${formatDate(new Date(), 'yyyy-MM-dd-hh-mm-ss', 'en')}.svg`)
-      restore()
+      const svg = this.view.toSVG();
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+      saveAs(blob, `room_layout_${formatDate(new Date(), 'yyyy-MM-dd-hh-mm-ss', 'en')}.svg`);
+      restore();
     }
   }
 

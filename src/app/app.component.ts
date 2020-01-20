@@ -1,93 +1,42 @@
 import { Component, OnInit } from '@angular/core';
-import { FormGroup, FormControl } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
-import { library } from '@fortawesome/fontawesome-svg-core';
-import { faReply, faShare, faClone, faTrash, faUndo, faRedo, faObjectGroup, faObjectUngroup, faPlus, faMinus } from '@fortawesome/free-solid-svg-icons';
-
-import { FURNISHINGS } from './models/furnishings';
 import { AppService } from './app.service';
-import { ChairsLayoutComponent } from './chairs-layout/chairs-layout.component'
-
-library.add( faReply, faShare, faClone, faTrash, faUndo, faRedo, faObjectGroup, faObjectUngroup, faMinus, faPlus )
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  template: `
+  <mat-toolbar color="primary">
+    <mat-toolbar-row>
+      <!-- <button mat-icon-button (click)="drawer.toggle()"><mat-icon>menu</mat-icon></button> -->
+      <h1>Room Layout</h1>
+    </mat-toolbar-row>
+  </mat-toolbar>
+
+  <mat-drawer-container hasBackdrop="false">
+    <mat-drawer mode="side" opened="true">
+      <app-items></app-items>
+    </mat-drawer>
+    <mat-drawer-content>
+      <app-toolbar></app-toolbar>
+      <app-view></app-view>
+      <app-statusbar></app-statusbar>
+    </mat-drawer-content>
+  </mat-drawer-container>
+  `,
+  styles: [`mat-drawer {
+    width: 350px;
+  }
+
+  mat-drawer-container {
+    height: calc(100% - 64px)
+  }
+  mat-toolbar-row{
+    justify-content: space-between
+  }`]
 })
 export class AppComponent implements OnInit {
-  title = 'room-layout';
 
-  init = false
-  furnishings = FURNISHINGS
-  defaultChairIndex = 0
+  constructor (public appService: AppService) {}
 
-  textForm: FormGroup
-
-  previewItem = null
-  previewType = null
-
-  constructor (public app: AppService, private dialog: MatDialog) {}
-
-  ngOnInit() {
-    const defaultChair = FURNISHINGS.chairs[0]
-    setTimeout(() => {
-      this.app.defaultChair.next(defaultChair)
-      this.init = true
-    }, 100)
-    this.initTextForm()
-  }
-
-  insert(object: any, type: string) {
-    if (this.app.roomEdit) return
-    this.app.insertObject.next({type, object})
-  }
-
-  defaultChairChanged(index: number) {
-    this.defaultChairIndex = index
-    this.app.defaultChair.next(FURNISHINGS.chairs[index])
-  }
-
-  initTextForm() {
-    this.textForm = new FormGroup({
-      text: new FormControl('New Text'),
-      font_size: new FormControl(16),
-      direction: new FormControl('HORIZONTAL')
-    })
-  }
-
-  insertNewText() {
-    this.insert({...this.textForm.value, name: 'TEXT:Text'}, 'TEXT')
-  }
-
-  layoutChairs() {
-    const ref = this.dialog.open(ChairsLayoutComponent)
-    ref.afterClosed().subscribe(res => {
-      if (!res)
-        return
-      this.insert(res, 'LAYOUT')
-    })
-  }
-
-  download(format: string) {
-    this.app.performOperation.next(format)
-  }
-
-  onZoom(value) {
-    this.app.zoom = value
-    this.app.performOperation.next('ZOOM')
-  }
-
-  // get text() {
-  //   return this.textForm.controls.text
-  // }
-
-  // get font_size() {
-  //   return this.textForm.controls.font_size
-  // }
-
-  // get vertical() {
-  //   return this.
-  // }
+  ngOnInit() {  }
 
 }

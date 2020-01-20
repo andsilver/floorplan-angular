@@ -1,70 +1,32 @@
-import { NgModule } from '@angular/core';
-
-import {
-  MatButtonModule,
-  MatButtonToggleModule,
-  MatDialogModule,
-  MatDividerModule,
-  MatExpansionModule,
-  MatFormFieldModule,
-  MatIconModule,
-  MatInputModule,
-  MatListModule,
-  MatMenuModule,
-  MatRadioModule,
-  MatSelectModule,
-  MatSidenavModule,
-  MatToolbarModule,
-  MatTooltipModule,
-} from '@angular/material';
-import {
-  FontAwesomeModule
-} from '@fortawesome/angular-fontawesome'
-
-import { FlexLayoutModule } from '@angular/flex-layout';
-import { ZoomComponent } from './zoom/zoom.component';
+import {NgModule} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {FlexLayoutModule} from '@angular/flex-layout';
+import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
+import { MaterialModule } from '../material/material.module';
+import { ZoomComponent } from './zoom.component';
 
 @NgModule({
   imports: [
-    FontAwesomeModule,
-    MatButtonModule,
-    MatButtonToggleModule,
-    MatDialogModule,
-    MatDividerModule,
-    MatExpansionModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatListModule,
-    MatMenuModule,
-    MatRadioModule,
-    MatSelectModule,
-    MatSidenavModule,
-    MatToolbarModule,
-    MatTooltipModule,
-  ],
-  exports: [
-    FontAwesomeModule,
-    MatButtonModule,
-    MatButtonToggleModule,
-    MatDialogModule,
-    MatDividerModule,
-    MatExpansionModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatListModule,
-    MatMenuModule,
-    MatRadioModule,
-    MatSelectModule,
-    MatSidenavModule,
-    MatToolbarModule,
-    MatTooltipModule,
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MaterialModule,
     FlexLayoutModule,
-
-    ZoomComponent
+    FontAwesomeModule
   ],
-  providers: [],
-  declarations: [ZoomComponent]
+  declarations: [ZoomComponent],
+  exports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MaterialModule,
+    FlexLayoutModule,
+    FontAwesomeModule,
+    ZoomComponent
+  ]
 })
-export class SharedModule { }
+
+export class SharedModule {
+}
+
