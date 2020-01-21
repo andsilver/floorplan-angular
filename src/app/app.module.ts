@@ -6,9 +6,9 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SharedModule } from './shared/shared.module';
 
 import { AppComponent } from './app.component';
-import { ViewComponent } from './view/view.component';
-import { PreviewFurnitureComponent } from './preview-furniture/preview-furniture.component';
-import { ChairsLayoutComponent } from './chairs-layout/chairs-layout.component';
+import { ViewComponent } from './components/view/view.component';
+import { PreviewFurnitureComponent } from './components/preview-furniture/preview-furniture.component';
+import { ChairsLayoutComponent } from './components/chairs-layout/chairs-layout.component';
 
 @NgModule({
   declarations: [

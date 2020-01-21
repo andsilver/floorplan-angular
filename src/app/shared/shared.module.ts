@@ -1,67 +1,19 @@
 import { NgModule } from '@angular/core';
 
-import {
-  MatButtonModule,
-  MatButtonToggleModule,
-  MatDialogModule,
-  MatDividerModule,
-  MatExpansionModule,
-  MatFormFieldModule,
-  MatIconModule,
-  MatInputModule,
-  MatListModule,
-  MatMenuModule,
-  MatRadioModule,
-  MatSelectModule,
-  MatSidenavModule,
-  MatToolbarModule,
-  MatTooltipModule,
-} from '@angular/material';
-import {
-  FontAwesomeModule
-} from '@fortawesome/angular-fontawesome'
+// Modules
+import { MaterialModule, DesignModule } from './modules';
 
-import { FlexLayoutModule } from '@angular/flex-layout';
-import { ZoomComponent } from './zoom/zoom.component';
+// Components
+import { ZoomComponent } from './components';
 
 @NgModule({
   imports: [
-    FontAwesomeModule,
-    MatButtonModule,
-    MatButtonToggleModule,
-    MatDialogModule,
-    MatDividerModule,
-    MatExpansionModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatListModule,
-    MatMenuModule,
-    MatRadioModule,
-    MatSelectModule,
-    MatSidenavModule,
-    MatToolbarModule,
-    MatTooltipModule,
+    MaterialModule,
+    DesignModule
   ],
   exports: [
-    FontAwesomeModule,
-    MatButtonModule,
-    MatButtonToggleModule,
-    MatDialogModule,
-    MatDividerModule,
-    MatExpansionModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatListModule,
-    MatMenuModule,
-    MatRadioModule,
-    MatSelectModule,
-    MatSidenavModule,
-    MatToolbarModule,
-    MatTooltipModule,
-    FlexLayoutModule,
-
+    MaterialModule,
+    DesignModule,
     ZoomComponent
   ],
   providers: [],

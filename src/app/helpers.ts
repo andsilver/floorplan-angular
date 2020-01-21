@@ -1,5 +1,5 @@
 import { fabric } from 'fabric';
-const { Group, Rect, Line, Circle, Ellipse, Path, Polygon, Polyline, Triangle, Point } = fabric
+const { Group, Rect, Line, Circle, Ellipse, Path, Polygon, Polyline, Triangle } = fabric;
 
 const
   RL_FILL = '#FFF',
@@ -18,22 +18,96 @@ const
   RL_ROOM_STROKE = '#000',
   RL_CORNER_FILL = '#88f',
   RL_UNGROUPABLES = ['CHAIR', 'MISCELLANEOUS', 'DOOR'],
-  RL_CREDIT_TEXT = 'Created with Faithlife Room Layout',
-  RL_CREDIT_TEXT_PARAMS = { fontSize: 12, fontFamily: 'Arial', fill: '#999', left: 12 }
+  RL_CREDIT_TEXT = 'Created with RoomLayout(elicloudh@gmail.com)',
+  RL_CREDIT_TEXT_PARAMS = { fontSize: 12, fontFamily: 'Arial', fill: '#999', left: 12 };
 
+
+const createText = (properties) => {
+  let { text } = properties;
+  if (properties.direction === 'VERTICAL') {
+    const chars = [];
+    for (const char of text) {
+      chars.push(char);
+    }
+    text = chars.join('\n');
+  }
+
+  return new fabric.IText(text, {
+    fontSize: properties.font_size,
+    lineHeight: 0.8,
+    name: properties.name,
+    hasControls: false
+  });
+};
+
+
+/** Create Basic Shape  */
+const createBasicShape = (part: any, stroke: string = '#aaaaaa', fill: string = 'white') => {
+  if (part.definition.fill == null)
+    part.definition.fill = fill;
+
+  if (part.definition.stroke == null)
+    part.definition.stroke = stroke;
+  else if (part.definition.stroke == 'chair')
+    part.definition.stroke = RL_CHAIR_STROKE;
+
+  let fObj;
+
+  switch (part.type) {
+    case 'circle':
+      fObj = new Circle(part.definition);
+      break;
+    case 'ellipse':
+      fObj = new Ellipse(part.definition);
+      break;
+    case 'line':
+      fObj = new Line(part.line, part.definition);
+      break;
+    case 'path':
+      fObj = new Path(part.path, part.definition);
+      break;
+    case 'polygon':
+      fObj = new Polygon(part.definition);
+      break;
+    case 'polyline':
+      fObj = new Polyline(part.definition);
+      break;
+    case 'rect':
+      fObj = new Rect(part.definition);
+      break;
+    case 'triangle':
+      fObj = new Triangle(part.definition);
+      break;
+  }
+
+  return (fObj);
+};
+
+
+const createFurniture = (type: string, object, chair = {}) => {
+  if (type === 'TABLE') {
+    return createTable(object, chair);
+  } else if (type === 'TEXT') {
+    return createText(object);
+  } else if (type === 'LAYOUT') {
+    return object;
+  } else {
+    return createShape(object, RL_STROKE, RL_FILL, type);
+  }
+};
 
 /** Adding Chairs */
 const createShape = (object: any, stroke = RL_CHAIR_STROKE, fill = RL_CHAIR_FILL, type: string = 'CHAIR'): fabric.Group => {
-  const parts = object.parts.map(obj => createBasicShape(obj, stroke, fill))
+  const parts = object.parts.map(obj => createBasicShape(obj, stroke, fill));
   const group = new Group(parts, {
     name: `${type}:${object.title}`,
     hasControls: false,
     originX: 'center',
     originY: 'center'
-  })
+  });
 
-  return group
-}
+  return group;
+};
 
 
 // All Create[Name]Object() functions should return a group
@@ -185,76 +259,7 @@ const createTable = (def: any, RL_DEFAULT_CHAIR: any, type: string = 'TABLE') =>
   });
 
   return tableGroup;
-}
-
-
-const createText = (properties) => {
-  let { text } = properties
-  if (properties.direction === 'VERTICAL') {
-    const chars = []
-    for (const char of text)
-      chars.push(char)
-    text = chars.join('\n')
-  }
-
-  return new fabric.IText(text, {
-    fontSize: properties.font_size,
-    lineHeight: 0.8,
-    name: properties.name,
-    hasControls: false
-  })
-}
-
-
-/** Create Basic Shape  */
-const createBasicShape = (part: any, stroke: string = '#aaaaaa', fill: string = 'white') => {
-  if (part.definition.fill == null) part.definition.fill = fill;
-  if (part.definition.stroke == null) part.definition.stroke = stroke;
-  else if (part.definition.stroke == 'chair') part.definition.stroke = RL_CHAIR_STROKE;
-
-  let fObj
-
-  switch (part.type) {
-    case 'circle':
-      fObj = new Circle(part.definition)
-      break
-    case 'ellipse':
-      fObj = new Ellipse(part.definition)
-      break
-    case 'line':
-      fObj = new Line(part.line, part.definition)
-      break
-    case 'path':
-      fObj = new Path(part.path, part.definition)
-      break
-    case 'polygon':
-      fObj = new Polygon(part.definition)
-      break
-    case 'polyline':
-      fObj = new Polyline(part.definition)
-      break
-    case 'rect':
-      fObj = new Rect(part.definition);
-      break
-    case 'triangle':
-      fObj = new Triangle(part.definition);
-      break
-  }
-
-  return (fObj)
-}
-
-
-const createFurniture = (type: string, object, chair = {}) => {
-  if (type === 'TABLE')
-      return createTable(object, chair)
-    else if (type === 'TEXT')
-      return createText(object)
-    else if (type === 'LAYOUT')
-      return object
-    else
-      return createShape(object, RL_STROKE, RL_FILL, type)
-}
+};
 
 export {
   createBasicShape,
@@ -281,4 +286,4 @@ export {
   RL_UNGROUPABLES,
   RL_CREDIT_TEXT,
   RL_CREDIT_TEXT_PARAMS
-}
+};
