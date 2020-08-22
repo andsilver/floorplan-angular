@@ -18,7 +18,7 @@ const
   RL_ROOM_STROKE = '#000',
   RL_CORNER_FILL = '#88f',
   RL_UNGROUPABLES = ['CHAIR', 'MISCELLANEOUS', 'DOOR'],
-  RL_CREDIT_TEXT = 'Created with RoomLayout(elicloudh@gmail.com)',
+  RL_CREDIT_TEXT = 'Created By https://github.com/ilhccc',
   RL_CREDIT_TEXT_PARAMS = { fontSize: 12, fontFamily: 'Arial', fill: '#999', left: 12 };
 
 
