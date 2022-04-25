@@ -5,11 +5,13 @@ import { MaterialModule, DesignModule } from './modules';
 
 // Components
 import { ZoomComponent } from './components';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @NgModule({
   imports: [
     MaterialModule,
-    DesignModule
+    DesignModule,
+    FontAwesomeModule
   ],
   exports: [
     MaterialModule,
