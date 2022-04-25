@@ -168,35 +168,35 @@
           <ng-container *ngIf="!app.roomEdit">
             <button mat-icon-button matTooltip="Undo (Ctrl + Z)" (click)="app.undo()"
               [disabled]="app.states.length === 1">
-              <fa-icon [icon]="['fas', 'reply']"></fa-icon>
+              <fa-icon [icon]="faReply"></fa-icon>
             </button>
             <button mat-icon-button matTooltip="Redo (Ctrl + Shift + Z)" (click)="app.redo()"
               [disabled]="app.redoStates.length === 0">
-              <fa-icon [icon]="['fas', 'share']"></fa-icon>
+              <fa-icon [icon]="faShare"></fa-icon>
             </button>
             <button mat-icon-button matTooltip="Clone (Ctrl + D)" [disabled]="app.selections.length === 0"
               (click)="app.clone()">
-              <fa-icon [icon]="['fas', 'clone']"></fa-icon>
+              <fa-icon [icon]="faClone"></fa-icon>
             </button>
             <button mat-icon-button matTooltip="Delete (Delete)" [disabled]="app.selections.length === 0"
               (click)="app.delete()">
-              <fa-icon [icon]="['fas', 'trash']"></fa-icon>
+              <fa-icon [icon]="faTrash"></fa-icon>
             </button>
             <button mat-icon-button matTooltip="Rotate Anti-Clockwise (Ctrl + Left Arrow)"
               [disabled]="app.selections.length === 0" (click)="app.rotateAntiClockWise()">
-              <fa-icon [icon]="['fas', 'undo']"></fa-icon>
+              <fa-icon [icon]="faUndo"></fa-icon>
             </button>
             <button mat-icon-button matTooltip="Rotate Clockwise (Ctrl + Right Arrow)"
               [disabled]="app.selections.length === 0" (click)="app.rotateClockWise()">
-              <fa-icon [icon]="['fas', 'redo']"></fa-icon>
+              <fa-icon [icon]="faRedo"></fa-icon>
             </button>
             <button mat-icon-button matTooltip="Group (Ctrl + G)" [disabled]="app.selections.length < 2"
               (click)="app.group()">
-              <fa-icon [icon]="['fas', 'object-group']"></fa-icon>
+              <fa-icon [icon]="faObjectGroup"></fa-icon>
             </button>
             <button mat-icon-button matTooltip="Ungroup (Ctrl + E)" [disabled]="!app.ungroupable"
               (click)="app.ungroup()">
-              <fa-icon [icon]="['fas', 'object-ungroup']"></fa-icon>
+              <fa-icon [icon]="faObjectUngroup"></fa-icon>
             </button>
             <button mat-button matTooltip="Arrange" [matMenuTriggerFor]="arrange">Arrange</button>
             <button mat-raised-button matTooltip="Switch Edition Mode" color="primary" (click)="app.editRoom()">Edit
@@ -205,11 +205,11 @@
           <ng-container *ngIf="app.roomEdit">
             <button mat-icon-button matTooltip="Undo (Ctrl + Z)" (click)="app.undo()"
               [disabled]="app.roomEditStates.length === 1">
-              <fa-icon [icon]="['fas', 'reply']"></fa-icon>
+              <fa-icon [icon]="faReply"></fa-icon>
             </button>
             <button mat-icon-button matTooltip="Redo (Ctrl + Shift + Z)" (click)="app.redo()"
               [disabled]="app.roomEditRedoStates.length === 0">
-              <fa-icon [icon]="['fas', 'share']"></fa-icon>
+              <fa-icon [icon]="faShare"></fa-icon>
             </button>
             <button mat-button matTooltip="Switch Edition Mode" color="primary" *ngIf="app.roomEdit"
               (click)="app.endEditRoom()">End Room Edition</button>

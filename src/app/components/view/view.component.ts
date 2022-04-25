@@ -711,7 +711,7 @@ export class ViewComponent implements OnInit, AfterViewInit {
     }
 
     this.view.clear();
-    this.view.loadFromDatalessJSON(current, () => {
+    this.view.loadFromJSON(current, () => {
       this.view.renderAll();
       this.corners = this.view.getObjects().filter(obj => obj.name === 'CORNER');
       this.drawRoom();
@@ -732,7 +732,7 @@ export class ViewComponent implements OnInit, AfterViewInit {
     }
 
     this.view.clear();
-    this.view.loadFromDatalessJSON(current, () => {
+    this.view.loadFromJSON(current, () => {
       this.view.renderAll();
       this.corners = this.view.getObjects().filter(obj => obj.name === 'CORNER');
       this.drawRoom();

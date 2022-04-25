@@ -38,6 +38,18 @@ export class AppComponent implements OnInit {
   previewItem = null;
   previewType = null;
 
+  // icons
+  faReply = faReply;
+  faShare = faShare;
+  faClone = faClone;
+  faTrash = faTrash;
+  faUndo = faUndo;
+  faRedo = faRedo;
+  faObjectGroup = faObjectGroup;
+  faObjectUngroup = faObjectUngroup;
+  faPlus = faPlus;
+  faMinus = faMinus;
+
   constructor(public app: AppService, private dialog: MatDialog) { }
 
   ngOnInit() {

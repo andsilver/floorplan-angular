@@ -1,5 +1,5 @@
-@import "~@angular/material/theming";
-@include mat-core();
+@use '@angular/material' as mat;
+@include mat.core();
 
 $primary-pane: (
   50: #e4e8f2,
@@ -67,10 +67,10 @@ $secondary-pane: (
   )
 );
 
-$primary: mat-palette($mat-pink);
-$accent: mat-palette($mat-red);
-$warn: mat-palette($mat-red);
+$primary: mat.define-palette(mat.$cyan-palette);
+$accent: mat.define-palette(mat.$red-palette);
+$warn: mat.define-palette(mat.$red-palette);
 
-$theme: mat-light-theme($primary, $accent, $warn);
+$theme: mat.define-light-theme($primary, $accent, $warn);
 
-@include angular-material-theme($theme);
+@include mat.all-component-themes($theme);
